@@ -1,0 +1,1694 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VocaDiary Premium - 나만의 영단어 일기장</title>
+    <!-- Web App Capabilities for iOS & Android (PWA) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="VocaDiary">
+    <link class="apple-touch-icon" href="https://placehold.co/192x192/4F46E5/FFFFFF?text=Voca">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts (Inter, Noto Sans KR) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- SortableJS for Drag and Drop Support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans KR', 'sans-serif'],
+                    },
+                    colors: {
+                        diary: {
+                            bg: '#FAF8F5',       /* Warm cream light background */
+                            card: '#FFFFFF',     /* Pure white card */
+                            primary: '#4F46E5',  /* Indigo accent */
+                            secondary: '#F59E0B',/* Warm Amber */
+                            text: '#1F2937',     /* Dark charcoal */
+                            softText: '#6B7280', /* Muted gray */
+                            paper: '#FDFBF7',    /* Writing pad effect */
+                            border: '#E5E7EB',
+                            
+                            // Dark Mode Theme Palette
+                            darkBg: '#0F172A',
+                            darkCard: '#1E293B',
+                            darkPaper: '#1A2238',
+                            darkText: '#F8FAFC',
+                            darkSoftText: '#94A3B8',
+                            darkBorder: '#334155'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Mobile Active Touch Effect */
+        button:active, .cursor-pointer:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        /* Modern custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .dark ::-webkit-scrollbar-track {
+            background: #0F172A;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D1D5DB;
+            border-radius: 4px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9CA3AF;
+        }
+
+        .reveal-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Animated Pulse for Audio TTS */
+        @keyframes audioPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.15); opacity: 0.8; color: #4F46E5; }
+        }
+        .audio-playing {
+            animation: audioPulse 0.6s infinite ease-in-out;
+        }
+
+        /* Interactive story words pulse */
+        @keyframes storyWordPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); }
+            50% { box-shadow: 0 0 0 6px rgba(139, 92, 246, 0); }
+        }
+        .story-word-btn {
+            animation: storyWordPulse 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-diary-darkBg text-diary-darkText font-sans min-h-screen flex flex-col antialiased select-none transition-colors duration-200">
+
+    <header class="sticky top-0 z-40 bg-diary-darkCard/90 backdrop-blur-md border-b border-diary-darkBorder shadow-sm px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <img src="https://placehold.co/100x100/4F46E5/FFFFFF?text=V" alt="VocaDiary 로고" class="w-10 h-10 rounded-xl object-cover shadow-md shadow-none">
+            <div>
+                <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
+                    <span>VocaDiary</span>
+                    <span class="text-[10px] bg-indigo-900/50 text-indigo-300 px-1.5 py-0.5 rounded-full font-bold">PRO</span>
+                </h1>
+                <p class="text-[10px] sm:text-xs text-diary-darkSoftText">야간 전용 스마트 감각 다이어리 영단어장</p>
+            </div>
+        </div>
+
+        <!-- Desktop Search Bar -->
+        <div class="hidden md:block relative w-64 mx-4">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                <i class="fa-solid fa-magnifying-glass text-sm"></i>
+            </span>
+            <input id="global-search" type="text" placeholder="모든 단어 검색..." 
+                   class="w-full pl-9 pr-4 py-1.5 bg-diary-darkBg border border-diary-darkBorder rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-white">
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex items-center space-x-1.5">
+            <!-- App Installation Guide Button -->
+            <button onclick="openInstallModal()" class="flex items-center space-x-1 px-3 py-1.5 bg-indigo-950/40 border border-indigo-900/50 text-indigo-300 text-xs font-semibold rounded-lg hover:bg-indigo-900/75 transition-colors">
+                <i class="fa-solid fa-mobile-screen-button"></i>
+                <span class="hidden sm:inline">앱 설치</span>
+            </button>
+
+            <!-- Backup & Restore Button -->
+            <button onclick="openSettingsModal()" class="p-2 text-gray-400 hover:text-indigo-400 rounded-lg hover:bg-slate-800 transition-colors" title="데이터 관리/설정">
+                <i class="fa-solid fa-gear text-lg"></i>
+            </button>
+            
+            <!-- Mobile Search Icon Button -->
+            <button onclick="toggleMobileSearch()" class="md:hidden p-2 text-gray-400 hover:text-indigo-600 rounded-lg hover:bg-slate-800 transition-colors">
+                <i class="fa-solid fa-magnifying-glass text-lg"></i>
+            </button>
+
+            <!-- Quick Stats Overview (Desktop) -->
+            <div class="hidden md:flex items-center space-x-3 bg-indigo-950/20 px-3 py-1.5 rounded-lg border border-indigo-900/45">
+                <div class="text-xs">
+                    <span class="text-diary-darkSoftText block leading-none">전체 단어</span>
+                    <span id="total-words-badge" class="font-bold text-indigo-300 text-sm">0</span>
+                </div>
+                <div class="h-6 w-px bg-indigo-800"></div>
+                <div class="text-xs">
+                    <span class="text-diary-darkSoftText block leading-none">암기율</span>
+                    <span id="completed-words-badge" class="font-bold text-green-400 text-sm">0%</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Search input bar (Expandable) -->
+    <div id="mobile-search-bar" class="hidden px-4 py-2 bg-diary-darkCard border-b border-diary-darkBorder">
+        <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                <i class="fa-solid fa-magnifying-glass text-sm"></i>
+            </span>
+            <input id="mobile-search-input" type="text" placeholder="모든 단어 검색..." 
+                   class="w-full pl-9 pr-4 py-2 bg-diary-darkBg border border-diary-darkBorder rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-white">
+        </div>
+    </div>
+
+    <!-- App Container -->
+    <main class="flex-1 flex flex-col md:flex-row max-w-7xl w-full mx-auto p-3 sm:p-4 gap-4 sm:gap-6 overflow-hidden">
+        
+        <!-- Sidebar: Diary Timeline & Calendar -->
+        <aside class="w-full md:w-80 flex flex-col space-y-3 shrink-0">
+            <!-- New Entry Button -->
+            <button onclick="openNewDiaryModal()" 
+                    class="w-full bg-diary-primary hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-calendar-plus"></i>
+                <span>새 단어장 일지 작성</span>
+            </button>
+
+            <!-- Diary List Container -->
+            <div class="bg-diary-darkCard border border-diary-darkBorder rounded-2xl p-4 shadow-sm flex-1 flex flex-col min-h-[220px] md:max-h-[calc(100vh-180px)] overflow-y-auto">
+                <div class="flex items-center justify-between mb-4 pb-2 border-b border-diary-darkBorder">
+                    <h2 class="font-bold text-gray-200 flex items-center space-x-2">
+                        <i class="fa-solid fa-book text-amber-500"></i>
+                        <span>단어장 일지 목록</span>
+                    </h2>
+                    <span id="diary-count-badge" class="bg-slate-800 text-gray-300 text-xs px-2.5 py-0.5 rounded-full font-medium">0개</span>
+                </div>
+
+                <!-- Diary Entries Timeline List -->
+                <div id="diary-list-container" class="space-y-3 flex-1 overflow-y-auto pr-1">
+                    <!-- Dynamic Items will load here -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- Word Study Board (Main Panel) -->
+        <section class="flex-1 bg-diary-darkCard border border-diary-darkBorder rounded-2xl shadow-sm flex flex-col overflow-hidden min-h-[480px]">
+            <!-- Active Diary Information & Header -->
+            <div class="p-4 sm:p-5 border-b border-diary-darkBorder bg-diary-darkCard/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <div class="flex items-center space-x-2 mb-1">
+                        <span id="active-diary-date" class="text-[10px] font-semibold text-indigo-400 tracking-wider bg-indigo-950/60 px-2 py-0.5 rounded">2026.06.06</span>
+                        <span id="active-diary-count" class="text-xs text-diary-darkSoftText">0개의 단어 수록</span>
+                    </div>
+                    <h2 id="active-diary-title" class="text-lg sm:text-xl font-bold text-white">단어장을 선택해주세요</h2>
+                    <p id="active-diary-desc" class="text-xs sm:text-sm text-diary-darkSoftText mt-0.5">선택된 일지에 대한 설명이 이곳에 보문을 보입니다.</p>
+                </div>
+                
+                <!-- Word Management & Study Options -->
+                <div class="flex flex-wrap items-center gap-1.5 self-start sm:self-center">
+                    <button onclick="startQuiz()" title="스마트 단어 퀴즈 풀기"
+                            class="p-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-white shadow-sm transition-all text-xs flex items-center space-x-1 font-semibold">
+                        <i class="fa-solid fa-circle-question"></i>
+                        <span>단어 퀴즈</span>
+                    </button>
+                    <!-- AI Story generator action -->
+                    <button onclick="openStoryCreator()" title="선택된 단어로 AI 이야기 만들기"
+                            class="p-2 bg-violet-600 hover:bg-violet-700 rounded-lg text-white shadow-sm transition-all text-xs flex items-center space-x-1 font-semibold">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>AI 스토리</span>
+                    </button>
+                    <button onclick="toggleAllMeanings(true)" title="뜻 모두 보기" 
+                            class="p-2 bg-slate-800 border border-diary-darkBorder hover:bg-slate-700 rounded-lg text-gray-300 shadow-sm transition-all text-xs flex items-center space-x-1">
+                        <i class="fa-solid fa-eye text-indigo-400"></i>
+                        <span class="hidden sm:inline">모두 보기</span>
+                    </button>
+                    <button onclick="toggleAllMeanings(false)" title="뜻 모두 가리기" 
+                            class="p-2 bg-slate-800 border border-diary-darkBorder hover:bg-slate-700 rounded-lg text-gray-300 shadow-sm transition-all text-xs flex items-center space-x-1">
+                        <i class="fa-solid fa-eye-slash text-gray-400"></i>
+                        <span class="hidden sm:inline">가리기</span>
+                    </button>
+                    <button onclick="shuffleActiveWords()" title="단어 순서 섞기" 
+                            class="p-2 bg-slate-800 border border-diary-darkBorder hover:bg-slate-700 rounded-lg text-gray-300 shadow-sm transition-all text-xs flex items-center space-x-1">
+                        <i class="fa-solid fa-shuffle text-amber-500"></i>
+                        <span class="hidden sm:inline">셔플</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Word List Area -->
+            <div class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3" id="word-list-container">
+                <!-- Word Cards will load here dynamically -->
+            </div>
+
+            <!-- Add/Append Word Quick Bar -->
+            <div class="p-4 bg-diary-darkCard/60 border-t border-diary-darkBorder flex flex-col gap-3">
+                <div class="w-full grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <div>
+                        <div class="flex justify-between items-center mb-1 pl-1">
+                            <span class="text-[10px] font-bold text-gray-400">영어 단어</span>
+                            <button type="button" id="quick-autofill-btn" onclick="autoFillWord('quick')" class="px-2 py-0.5 bg-indigo-950/40 hover:bg-indigo-900/60 border border-indigo-900/30 rounded-lg text-indigo-300 text-[9px] font-semibold flex items-center gap-1 transition-all select-none">
+                                <i id="quick-wand-icon" class="fa-solid fa-wand-magic-sparkles"></i>
+                                <span>AI 자동 완성</span>
+                            </button>
+                        </div>
+                        <input id="quick-word-input" type="text" placeholder="예: Ephemeral" 
+                               class="w-full px-3 py-2 bg-slate-800 border border-diary-darkBorder rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 mb-1 pl-1">품사</label>
+                        <select id="quick-pos-input" class="w-full px-3 py-2 bg-slate-800 border border-diary-darkBorder rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-gray-300">
+                            <option value="형용사">형용사 (adj)</option>
+                            <option value="명사">명사 (noun)</option>
+                            <option value="동사">동사 (verb)</option>
+                            <option value="부사">부사 (adv)</option>
+                            <option value="전치사">전치사 (prep)</option>
+                            <option value="접속사">접속사 (conj)</option>
+                            <option value="대명사">대명사 (pron)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 mb-1 pl-1">한글 발음 (선택)</label>
+                        <input id="quick-pronunciation-input" type="text" placeholder="예: 이페머럴" 
+                               class="w-full px-3 py-2 bg-slate-800 border border-diary-darkBorder rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 mb-1 pl-1">뜻</label>
+                        <input id="quick-meaning-input" type="text" placeholder="예: 일시적인" 
+                               class="w-full px-3 py-2 bg-slate-800 border border-diary-darkBorder rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-white">
+                    </div>
+                </div>
+                <button onclick="addWordToActiveDiary()" 
+                        class="w-full bg-diary-primary hover:bg-indigo-700 text-white font-semibold py-2.5 px-4 rounded-xl shadow-md transition-all flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>이 일지에 새로운 영단어 등록</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- App Installation Guide Modal -->
+    <div id="install-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-diary-darkCard rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-diary-darkBorder transition-all transform scale-95 opacity-0 duration-300" id="install-modal-content">
+            <div class="px-6 py-5 bg-indigo-950 border-b border-indigo-900 flex items-center justify-between">
+                <h3 class="text-base font-bold text-indigo-100 flex items-center space-x-2">
+                    <i class="fa-solid fa-mobile-screen text-lg"></i>
+                    <span>스마트폰 앱으로 다운로드 설치</span>
+                </h3>
+                <button onclick="closeInstallModal()" class="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-5">
+                <p class="text-xs text-gray-400 leading-relaxed">
+                    ⚠️ 현재 보고 계신 <b>미리보기 내부</b>에서는 브라우저 보안 규정상 모바일 설치 기능이 가동하지 않을 수 있습니다. 
+                    아래 주소를 복사하여 모바일 기기의 <b>기본 브라우저(Safari 또는 Chrome)</b>로 접속하시면 바로 홈화면에 설치 가능합니다!
+                </p>
+
+                <!-- Copy Link Area -->
+                <div class="p-3 bg-indigo-950/25 rounded-xl border border-indigo-900/40 flex items-center justify-between">
+                    <span class="text-xs font-semibold text-indigo-300 truncate mr-2" id="app-current-url">Loading URL...</span>
+                    <button onclick="copyAppAddress()" class="shrink-0 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold rounded-lg transition-colors flex items-center space-x-1">
+                        <i class="fa-regular fa-copy"></i>
+                        <span>주소 복사</span>
+                    </button>
+                </div>
+                
+                <!-- iOS/iPhone Guide -->
+                <div class="p-3 bg-slate-800 rounded-xl border border-diary-darkBorder">
+                    <h4 class="font-bold text-xs text-gray-200 flex items-center space-x-1.5 mb-1.5">
+                        <i class="fa-brands fa-apple text-sm"></i>
+                        <span>아이폰 (Safari 브라우저에서 실행)</span>
+                    </h4>
+                    <ol class="list-decimal list-inside text-[11px] text-gray-400 space-y-1 pl-1">
+                        <li>하단 툴바의 <strong class="text-indigo-400">공유 버튼 <i class="fa-solid fa-arrow-up-from-bracket"></i></strong>을 누릅니다.</li>
+                        <li>목록에서 <strong class="text-indigo-400">'홈 화면에 추가'</strong>를 선택합니다.</li>
+                        <li>바탕화면에 나만의 단어장 일지 앱이 즉시 생성됩니다.</li>
+                    </ol>
+                </div>
+
+                <!-- Android Guide -->
+                <div class="p-3 bg-slate-800 rounded-xl border border-diary-darkBorder">
+                    <h4 class="font-bold text-xs text-gray-200 flex items-center space-x-1.5 mb-1.5">
+                        <i class="fa-brands fa-android text-sm"></i>
+                        <span>안드로이드 (Chrome 브라우저에서 실행)</span>
+                    </h4>
+                    <ol class="list-decimal list-inside text-[11px] text-gray-400 space-y-1 pl-1">
+                        <li>우측 상단의 <strong class="text-indigo-400">공유 및 홈 추가 메뉴 <i class="fa-solid fa-ellipsis-vertical"></i></strong>를 누릅니다.</li>
+                        <li><strong class="text-indigo-400">'홈 화면에 추가'</strong> 또는 <strong class="text-indigo-400">'앱 설치'</strong>를 터치합니다.</li>
+                        <li>다운로드가 자동 완료되어 독립형 단어 전용 앱으로 동작합니다.</li>
+                    </ol>
+                </div>
+
+                <button onclick="closeInstallModal()" class="w-full py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md transition-colors">
+                    확인했습니다
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup, Settings & Storage Management Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-diary-darkCard rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-diary-darkBorder transition-all transform scale-95 opacity-0 duration-300" id="settings-modal-content">
+            <div class="px-6 py-5 bg-slate-800 border-b border-diary-darkBorder flex items-center justify-between">
+                <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-gear text-indigo-400"></i>
+                    <span>단어장 고급 설정 및 데이터 관리</span>
+                </h3>
+                <button onclick="closeSettingsModal()" class="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-slate-700 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-5 max-h-[calc(100vh-160px)] overflow-y-auto">
+                
+                <!-- NEW: Gemini API Key Personal Setting Panel -->
+                <div class="p-4 bg-indigo-950/30 border border-indigo-900/50 rounded-2xl space-y-3">
+                    <div class="flex items-center justify-between pl-0.5">
+                        <h4 class="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-key"></i>
+                            <span>Gemini API Key 설정 (모바일/개인용)</span>
+                        </h4>
+                        <span id="api-key-status-badge" class="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded font-semibold">기본 탑재 키 사용 중</span>
+                    </div>
+                    <p class="text-[10px] text-diary-darkSoftText leading-relaxed">
+                        개인 모바일 기기(PWA)에서 단어 자동완성 및 AI 스토리 기능을 자유롭게 실행하려면 구글 AI 스튜디오에서 발급받은 최신 API Key(aq... 등)를 입력하여 저장해 주세요. 발급키는 브라우저 내부 스토리지에 안전하게 보관됩니다.
+                    </p>
+                    <div class="flex gap-2">
+                        <input id="settings-api-key" type="password" placeholder="aq..." 
+                               class="flex-1 px-3 py-2 bg-slate-900 border border-diary-darkBorder rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-white">
+                        <button onclick="saveCustomApiKey()" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all">
+                            저장
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Import / Export Controls -->
+                <div>
+                    <h4 class="text-xs font-bold text-gray-200 mb-2 pl-1">JSON 원본 데이터 백업 & 복원</h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="exportData()" class="flex flex-col items-center justify-center p-3 bg-slate-800 hover:bg-slate-700 border border-diary-darkBorder rounded-xl transition-all">
+                            <i class="fa-solid fa-file-arrow-down text-base text-gray-300 mb-1"></i>
+                            <span class="text-[11px] font-bold text-gray-300">전체 백업 (JSON)</span>
+                        </button>
+                        <label class="flex flex-col items-center justify-center p-3 bg-slate-800 hover:bg-slate-700 border border-diary-darkBorder rounded-xl transition-all cursor-pointer">
+                            <i class="fa-solid fa-file-arrow-up text-base text-amber-400 mb-1"></i>
+                            <span class="text-[11px] font-bold text-gray-300">백업 복원 (JSON)</span>
+                            <input type="file" id="import-file" class="hidden" accept=".json" onchange="importData(event)">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Excel / CSV Controls -->
+                <div>
+                    <h4 class="text-xs font-bold text-gray-200 mb-2 pl-1">Excel & 구글 시트 호환 백업 (CSV)</h4>
+                    <p class="text-[10px] text-diary-darkSoftText mb-2">현재 선택된 다이어리의 단어 목록을 엑셀로 내보내거나 대량 등록할 수 있습니다.</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="exportCSV()" class="flex flex-col items-center justify-center p-3 bg-indigo-950/20 hover:bg-indigo-100/50 border border-indigo-900/40 rounded-xl transition-all">
+                            <i class="fa-solid fa-file-excel text-base text-indigo-400 mb-1"></i>
+                            <span class="text-[11px] font-bold text-indigo-400">CSV 엑셀로 받기</span>
+                        </button>
+                        <label class="flex flex-col items-center justify-center p-3 bg-indigo-950/20 hover:bg-indigo-100/50 border border-indigo-900/40 rounded-xl transition-all cursor-pointer">
+                            <i class="fa-solid fa-file-import text-base text-emerald-400 mb-1"></i>
+                            <span class="text-[11px] font-bold text-emerald-400">CSV 단어 올리기</span>
+                            <input type="file" id="import-csv-file" class="hidden" accept=".csv" onchange="importCSV(event)">
+                        </label>
+                    </div>
+                </div>
+
+                <div class="border-t border-diary-darkBorder pt-3 text-center">
+                    <button onclick="requestClearAllData()" class="text-[11px] text-red-500 hover:text-red-600 font-semibold">
+                        <i class="fa-solid fa-triangle-exclamation mr-1"></i>앱 전체 데이터 초기화
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Diary Modal -->
+    <div id="new-diary-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-diary-darkCard rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-diary-darkBorder transition-all transform scale-95 opacity-0 duration-300" id="new-diary-modal-content">
+            <div class="px-6 py-4 bg-slate-800 border-b border-diary-darkBorder flex items-center justify-between">
+                <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-calendar-plus text-indigo-400"></i>
+                    <span>새 단어장 일지 생성</span>
+                </h3>
+                <button onclick="closeNewDiaryModal()" class="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-slate-700 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <form onsubmit="handleCreateDiarySubmit(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">날짜 선택</label>
+                    <input id="modal-diary-date" type="date" required 
+                           class="w-full px-4 py-2.5 border border-diary-darkBorder rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 bg-slate-800 text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">다이어리 주제 / 제목</label>
+                    <input id="modal-diary-title" type="text" placeholder="예: 해외여행 중 레스토랑 필수 표현" required 
+                           class="w-full px-4 py-2.5 border border-diary-darkBorder rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:bg-slate-800 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">오늘의 단어 학습 소감 / 메모</label>
+                    <textarea id="modal-diary-desc" placeholder="오늘 공부하며 어려웠거나 특별히 깊게 익힐 부분을 기록하세요..." rows="2" 
+                              class="w-full px-4 py-2.5 border border-diary-darkBorder rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 bg-slate-800 text-white"></textarea>
+                </div>
+
+                <div>
+                    <span class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">스타터 단어셋 추가</span>
+                    <label class="flex items-center space-x-3 cursor-pointer p-3 border border-dashed border-diary-darkBorder rounded-xl bg-slate-800 hover:bg-indigo-50/20 hover:border-indigo-300 transition-colors">
+                        <input type="checkbox" id="modal-diary-setup-samples" checked class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                        <div class="text-xs">
+                            <span class="font-bold text-gray-300 block">검증된 핵심 어휘 샘플 4개 포함</span>
+                            <span class="text-diary-darkSoftText">학습을 시작할 수 있는 기본 단어가 미리 추가되어 만들어집니다.</span>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="flex items-center space-x-3 pt-3">
+                    <button type="button" onclick="closeNewDiaryModal()" 
+                            class="flex-1 py-3 text-sm font-semibold text-gray-300 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors">
+                        취소
+                    </button>
+                    <button type="submit" 
+                            class="flex-1 py-3 text-sm font-semibold text-white bg-diary-primary hover:bg-indigo-700 rounded-xl shadow-md transition-colors">
+                        다이어리 만들기
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Generic Custom Confirmation Modal -->
+    <div id="confirm-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-diary-darkCard rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl border border-diary-darkBorder p-6 transition-all transform scale-95 opacity-0 duration-300" id="confirm-modal-content">
+            <div class="text-center">
+                <div id="confirm-icon-container" class="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i id="confirm-modal-icon" class="fa-solid fa-triangle-exclamation text-xl"></i>
+                </div>
+                <h3 id="confirm-modal-title" class="text-lg font-bold text-white mb-1">정말 진행하시겠습니까?</h3>
+                <p id="confirm-modal-body" class="text-sm text-gray-400 mb-6 leading-relaxed">이 작업은 취소할 수 없습니다.</p>
+                <div class="flex items-center space-x-3">
+                    <button onclick="closeConfirmModal()" class="flex-1 py-2.5 text-sm font-semibold text-gray-300 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors">
+                        취소
+                    </button>
+                    <button id="confirm-execute-btn" class="flex-1 py-2.5 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-xl shadow-md transition-colors">
+                        실행하기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Word Edit Modal -->
+    <div id="edit-word-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-diary-darkCard rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-diary-darkBorder transition-all transform scale-95 opacity-0 duration-300" id="edit-word-modal-content">
+            <div class="px-6 py-5 bg-slate-800 border-b border-diary-darkBorder flex items-center justify-between">
+                <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-pen-to-square text-indigo-400"></i>
+                    <span>단어 상세 내용 수정</span>
+                </h3>
+                <button onclick="closeEditWordModal()" class="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-slate-700 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form onsubmit="handleEditWordSubmit(event)" class="p-6 space-y-4">
+                <div>
+                    <div class="flex justify-between items-center mb-1.5 pl-1">
+                        <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">영어 단어</span>
+                        <button type="button" id="edit-autofill-btn" onclick="autoFillWord('edit')" class="px-2 py-1 bg-indigo-950/40 hover:bg-indigo-900/60 border border-indigo-900/30 rounded-lg text-indigo-300 text-[11px] font-bold flex items-center gap-1 transition-all select-none">
+                            <i id="edit-wand-icon" class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>AI 자동 완성</span>
+                        </button>
+                    </div>
+                    <input id="edit-word-input" type="text" required 
+                           class="w-full px-4 py-2.5 border border-diary-darkBorder rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 bg-slate-800 text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 pl-1">품사</label>
+                    <select id="edit-pos-input" class="w-full px-4 py-2.5 border border-diary-darkBorder rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-gray-300 bg-slate-800">
+                        <option value="형용사">형용사 (adj)</option>
+                        <option value="명사">명사 (noun)</option>
+                        <option value="동사">동사 (verb)</option>
+                        <option value="부사">부사 (adv)</option>
+                        <option value="전치사">전치사 (prep)</option>
+                        <option value="접속사">접속사 (conj)</option>
+                        <option value="대명사">대명사 (pron)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 pl-1">한글 발음</label>
+                    <input id="edit-pronunciation-input" type="text" 
+                           class="w-full px-4 py-2.5 border border-diary-darkBorder rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 bg-slate-800 text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 pl-1">뜻</label>
+                    <input id="edit-meaning-input" type="text" required 
+                           class="w-full px-4 py-2.5 border border-diary-darkBorder rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 bg-slate-800 text-white">
+                </div>
+                <div class="flex items-center space-x-3 pt-3">
+                    <button type="button" onclick="closeEditWordModal()" 
+                            class="flex-1 py-3 text-sm font-semibold text-gray-300 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors">
+                        취소
+                    </button>
+                    <button type="submit" 
+                            class="flex-1 py-3 text-sm font-semibold text-white bg-diary-primary hover:bg-indigo-700 rounded-xl shadow-md transition-colors">
+                        수정 완료
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Immersive Interactive Quiz Modal -->
+    <div id="quiz-modal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-diary-darkCard rounded-3xl max-w-md w-full p-6 text-white border border-diary-darkBorder shadow-2xl relative">
+            <button onclick="closeQuiz()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-all p-2 rounded-full">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <!-- Quiz Play State -->
+            <div id="quiz-state-play">
+                <div class="mb-4">
+                    <div class="flex justify-between items-center text-xs text-gray-400 mb-2">
+                        <span>스마트 다이어리 퀴즈</span>
+                        <span id="quiz-question-counter" class="font-bold">Q 1 / 5</span>
+                    </div>
+                    <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                        <div id="quiz-progress-bar" class="bg-emerald-500 h-full transition-all" style="width: 20%"></div>
+                    </div>
+                </div>
+
+                <!-- Quiz Card Question Area -->
+                <div class="bg-slate-800/40 border border-diary-darkBorder rounded-2xl p-6 text-center mb-6">
+                    <span id="quiz-question-pos" class="text-[10px] bg-indigo-950 text-indigo-400 px-2 py-0.5 rounded font-bold uppercase">명사</span>
+                    <h3 id="quiz-question-word" class="text-3xl font-extrabold tracking-tight mt-3 text-indigo-400">Serendipity</h3>
+                    <p id="quiz-question-pron" class="text-xs text-gray-500 mt-1">[세렌디피티]</p>
+                </div>
+
+                <!-- MCQ Options Block -->
+                <div class="space-y-2" id="quiz-options-container">
+                    <!-- Options load dynamically -->
+                </div>
+            </div>
+
+            <!-- Quiz Score State (Result View) -->
+            <div id="quiz-state-result" class="hidden text-center py-6">
+                <div class="w-20 h-20 bg-emerald-950 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-trophy text-4xl"></i>
+                </div>
+                <h3 class="text-2xl font-extrabold text-white mb-1">퀴즈 완료!</h3>
+                <p class="text-sm text-gray-400 mb-6">단어들을 마스터하기 시작했습니다.</p>
+                
+                <div class="bg-slate-800 rounded-2xl p-4 max-w-xs mx-auto mb-6">
+                    <span class="text-xs text-gray-400 block mb-1">학습 정답률</span>
+                    <h4 id="quiz-result-score" class="text-3xl font-black text-indigo-400">4 / 5 개</h4>
+                    <p id="quiz-result-feedback" class="text-xs text-diary-darkSoftText mt-1.5">조금만 더 집중하면 완벽해집니다!</p>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                    <button onclick="startQuiz()" class="flex-1 py-3 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors">
+                        다시 도전
+                    </button>
+                    <button onclick="closeQuiz()" class="flex-1 py-3 text-sm font-semibold text-gray-300 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors">
+                        종료
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Story Generator Creator Modal -->
+    <div id="story-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div id="story-modal-content" class="bg-diary-darkCard rounded-3xl max-w-4xl w-full h-[85vh] overflow-hidden shadow-2xl border border-diary-darkBorder flex flex-col md:flex-row transition-all transform scale-95 opacity-0 duration-300">
+            <!-- Left Panel: Select Words (Scrollable) -->
+            <div class="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-diary-darkBorder p-5 flex flex-col h-1/2 md:h-full">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-bold text-white text-base flex items-center space-x-2">
+                        <i class="fa-solid fa-list-check text-violet-400"></i>
+                        <span>단어 선택</span>
+                    </h3>
+                    <button onclick="closeStoryCreator()" class="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors" title="단어 입력창으로 돌아가기">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+                <p class="text-xs text-diary-darkSoftText mb-4">이야기 속에 활용할 영단어를 체크하세요.</p>
+                <div id="story-checklist-container" class="flex-1 overflow-y-auto space-y-2 pr-1 font-semibold">
+                    <!-- Checkboxes render here -->
+                </div>
+                
+                <div class="mt-4 flex flex-col gap-2">
+                    <button id="story-generate-btn" onclick="generateAIStory()" class="w-full bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>AI 이야기 생성</span>
+                    </button>
+                    <button onclick="closeStoryCreator()" class="w-full bg-slate-800 hover:bg-slate-700 text-gray-300 font-bold py-2.5 px-4 rounded-xl border border-diary-darkBorder transition-colors flex items-center justify-center space-x-2 text-xs">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span>단어 입력창으로 돌아가기</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Panel: View Story (Scrollable & Styled) -->
+            <div class="flex-1 p-6 bg-diary-darkPaper flex flex-col overflow-y-auto relative h-1/2 md:h-full">
+                
+                <div id="story-loading-state" class="hidden absolute inset-0 bg-diary-darkPaper/95 z-10 flex flex-col items-center justify-center text-center p-6 transition-opacity">
+                    <div class="w-16 h-16 relative mb-4">
+                        <div class="absolute inset-0 rounded-full border-4 border-violet-950"></div>
+                        <div class="absolute inset-0 rounded-full border-4 border-t-violet-400 animate-spin"></div>
+                    </div>
+                    <h4 class="font-bold text-white">AI가 단어 조합 이야기를 집필 중입니다...</h4>
+                    <p class="text-xs text-diary-darkSoftText mt-1.5 max-w-xs">자연스럽고 문맥이 살아있는 독창적인 한글 스토리가 곧 구성됩니다.</p>
+                </div>
+
+                <div id="story-display-pane" class="flex flex-col h-full justify-between">
+                    <div class="text-center py-12 text-diary-darkSoftText" id="story-empty-state">
+                        <i class="fa-solid fa-book-open text-4xl text-violet-950 mb-3 block"></i>
+                        <h3 class="font-bold text-gray-300">스토리가 아직 비어있습니다.</h3>
+                        <p class="text-xs mt-1 max-w-xs mx-auto leading-relaxed">왼쪽 리스트에서 엮어 넣을 단어들을 체크하고 <b>[AI 이야기 생성]</b> 단추를 누지르세요!</p>
+                    </div>
+
+                    <div id="story-content-box" class="hidden flex-1 flex flex-col justify-start">
+                        <div class="border-b border-dashed border-violet-900 pb-3 mb-4 text-center">
+                            <span class="text-[10px] uppercase font-bold text-violet-400 bg-violet-950/60 px-2 py-0.5 rounded tracking-wider">AI Word Story</span>
+                            <h2 id="story-rendered-title" class="text-lg font-black text-white mt-1">이야기 제목</h2>
+                        </div>
+                        <p id="story-rendered-body" class="text-sm sm:text-base leading-relaxed text-gray-300 space-y-2 select-text">
+                            <!-- Dynamic styled text parts will go here -->
+                        </p>
+                    </div>
+
+                    <div id="story-content-footer" class="hidden text-center text-[10px] font-bold text-violet-400 border-t border-dashed border-violet-900 pt-3 mt-6">
+                        <i class="fa-solid fa-hand-pointer mr-1 animate-bounce"></i> 보라색 영어 단어를 클릭/터치하면 상세 발음과 한글 뜻이 표시됩니다!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Story Tooltip element overlay -->
+    <div id="story-tooltip" class="absolute hidden z-50 bg-white text-slate-900 p-3 rounded-xl shadow-2xl border border-slate-100 max-w-xs pointer-events-auto transform -translate-x-1/2 -translate-y-full transition-all duration-150">
+        <div class="flex flex-col text-center">
+            <span id="tooltip-pos" class="text-[9px] uppercase tracking-wider font-bold text-indigo-600 mb-0.5">품사</span>
+            <span id="tooltip-word" class="font-extrabold text-sm mb-0.5">Word</span>
+            <span id="tooltip-pron" class="text-[11px] opacity-75 mb-1.5">[발음]</span>
+            <div class="h-px bg-slate-200 mb-1.5"></div>
+            <span id="tooltip-meaning" class="font-bold text-xs">뜻풀이</span>
+        </div>
+        <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full w-0 h-0 border-4 border-transparent border-t-white"></div>
+    </div>
+    
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-[60] flex flex-col gap-2 pointer-events-none"></div>
+
+    <script>
+        // Global API Key - The execution environment replaces this with the active key once at runtime.
+        const apiKey = "";
+
+        // Default Mock Data
+        const defaultDiaryEntries = [
+            {
+                id: 'diary-1',
+                date: '2026-06-06',
+                title: '✍️ 일상 생활 속 고급 형용사',
+                desc: '미드나 뉴스에 단골로 등장하는 풍부한 표현용 형용사 정리!',
+                words: [
+                    { id: 'Met-1', word: 'Meticulous', pos: '형용사', pronunciation: '머티큘러스', meaning: '꼼꼼한, 세심한', status: 'learning' },
+                    { id: 'Sup-2', word: 'Superfluous', pos: '형용사', pronunciation: '수퍼플루어스', meaning: '불필요한, 과잉의', status: 'memorized' },
+                    { id: 'Ser-3', word: 'Serendipity', pos: '명사', pronunciation: '세렌디피티', meaning: '뜻밖의 기쁨, 운 좋은 발견', status: 'learning' },
+                    { id: 'Amb-4', word: 'Ambiguous', pos: '형용사', pronunciation: '앰비규어스', meaning: '모호한, 불분명한', status: 'learning' },
+                    { id: 'Res-5', word: 'Resilient', pos: '형용사', pronunciation: '리질리언트', meaning: '회복력 있는, 탄력 있는', status: 'learning' }
+                ]
+            },
+            {
+                id: 'diary-2',
+                date: '2026-06-05',
+                title: '💼 비즈니스 핵심 실무 어휘',
+                desc: '영문 이메일 및 회의 진행 시 격식을 높여주는 프로페셔널 어휘.',
+                words: [
+                    { id: 'Lev-6', word: 'Leverage', pos: '동사', pronunciation: '레버리지', meaning: '영향력을 미치다, 활용하다', status: 'memorized' },
+                    { id: 'Fea-7', word: 'Feasible', pos: '형용사', pronunciation: '피저블', meaning: '실행 가능한, 그럴싸한', status: 'memorized' },
+                    { id: 'Spe-8', word: 'Spearhead', pos: '동사', pronunciation: '스피어헤드', meaning: '선봉에 서다, 진두지휘하다', status: 'learning' },
+                    { id: 'Syn-9', word: 'Synergy', pos: '명사', pronunciation: '시너지', meaning: '시너지 효과, 공동 상승 작용', status: 'learning' }
+                ]
+            }
+        ];
+
+        let diaryEntries = [];
+        let activeDiaryId = '';
+        let wordRevealState = {}; 
+        let pendingConfirmAction = null; 
+        let diarySortable = null;
+
+        let quizWordsList = [];
+        let currentQuizIndex = 0;
+        let quizCorrectAnswers = 0;
+
+        window.onload = function() {
+            loadStateFromLocalStorage();
+            setupDynamicManifest();
+
+            const currentUrlElement = document.getElementById('app-current-url');
+            if (currentUrlElement) {
+                currentUrlElement.textContent = window.location.href;
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('modal-diary-date').value = today;
+
+            renderDiaryTimeline();
+            loadActiveDiary(activeDiaryId);
+            updateGlobalStats();
+
+            const globalSearchInput = document.getElementById('global-search');
+            if (globalSearchInput) {
+                globalSearchInput.addEventListener('input', handleGlobalSearch);
+            }
+            
+            const mobileSearchInput = document.getElementById('mobile-search-input');
+            if (mobileSearchInput) {
+                mobileSearchInput.addEventListener('input', handleGlobalSearch);
+            }
+
+            document.addEventListener('click', function(e) {
+                const tooltip = document.getElementById('story-tooltip');
+                if (tooltip && !tooltip.classList.contains('hidden')) {
+                    if (!e.target.closest('.story-word-btn') && !e.target.closest('#story-tooltip')) {
+                        tooltip.classList.add('hidden');
+                    }
+                }
+            });
+        };
+
+        function setupDynamicManifest() {
+            try {
+                const myManifest = {
+                    name: "VocaDiary",
+                    short_name: "VocaDiary",
+                    start_url: window.location.href,
+                    display: "standalone",
+                    background_color: "#0F172A",
+                    theme_color: "#4F46E5",
+                    icons: [
+                        { src: "https://placehold.co/192x192/4F46E5/FFFFFF?text=Voca", sizes: "192x192", type: "image/png" },
+                        { src: "https://placehold.co/512x512/4F46E5/FFFFFF?text=VocaDiary", sizes: "512x512", type: "image/png" }
+                    ]
+                };
+                const manifestStr = JSON.stringify(myManifest);
+                const blob = new Blob([manifestStr], { type: 'application/json' });
+                const manifestURL = URL.createObjectURL(blob);
+                
+                const linkElement = document.createElement('link');
+                linkElement.rel = 'manifest';
+                linkElement.href = manifestURL;
+                document.head.appendChild(linkElement);
+            } catch (e) {}
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `p-4 rounded-xl shadow-xl flex items-center space-x-3 text-sm bg-slate-800 border border-diary-darkBorder transition-all transform translate-y-2 opacity-0 pointer-events-auto max-w-sm`;
+            
+            let icon = '';
+            if (type === 'success') icon = '<i class="fa-solid fa-circle-check text-green-400 text-lg"></i>';
+            else if (type === 'warning') icon = '<i class="fa-solid fa-triangle-exclamation text-amber-400 text-lg"></i>';
+            else icon = '<i class="fa-solid fa-circle-info text-indigo-400 text-lg"></i>';
+
+            toast.innerHTML = `${icon}<div class="flex-1 font-medium text-gray-200">${message}</div>`;
+            container.appendChild(toast);
+            
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 50);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function toggleMeaning(wordId) {
+            wordRevealState[wordId] = !(wordRevealState[wordId] || false);
+            saveStateToLocalStorage();
+            const activeDiary = diaryEntries.find(d => d.id === activeDiaryId);
+            if (activeDiary) renderActiveWords(activeDiary.words);
+        }
+
+        function toggleAllMeanings(revealAll) {
+            const activeDiary = diaryEntries.find(d => d.id === activeDiaryId);
+            if (!activeDiary) return;
+            activeDiary.words.forEach(w => wordRevealState[w.id] = revealAll);
+            saveStateToLocalStorage();
+            renderActiveWords(activeDiary.words);
+            showToast(revealAll ? '전체 뜻을 표시합니다.' : '전체 뜻을 숨겼습니다.', 'info');
+        }
+
+        function shuffleActiveWords() {
+            const activeDiary = diaryEntries.find(d => d.id === activeDiaryId);
+            if (!activeDiary || activeDiary.words.length <= 1) return;
+
+            let arr = [...activeDiary.words];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            renderActiveWords(arr);
+            showToast('단어 카드 순서를 무작위로 섞었습니다!', 'success');
+        }
+
+        function speakWord(event, text, wordId = null) {
+            if (event) event.stopPropagation();
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.85;
+
+                let btn = null;
+                if (wordId) {
+                    btn = document.getElementById(`speaker-btn-${wordId}`);
+                    if (btn) btn.classList.add('audio-playing');
+                }
+                utterance.onend = () => { if (btn) btn.classList.remove('audio-playing'); };
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(utterance);
+            } else {
+                showToast('음성 합성(TTS)이 이 브라우저에서 동작하지 않습니다.', 'warning');
+            }
+        }
+
+        function copyAppAddress() {
+            try {
+                const tempInput = document.createElement('input');
+                tempInput.value = window.location.href;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                showToast('단어장 주소가 클립보드에 복사되었습니다.', 'success');
+            } catch (err) {
+                showToast('주소 복사에 실패했습니다.', 'warning');
+            }
+        }
+
+        function saveStateToLocalStorage() {
+            localStorage.setItem('vocadiary_entries', JSON.stringify(diaryEntries));
+            localStorage.setItem('vocadiary_active_id', activeDiaryId);
+            localStorage.setItem('vocadiary_reveal_state', JSON.stringify(wordRevealState));
+        }
+
+        function loadStateFromLocalStorage() {
+            const rawEntries = localStorage.getItem('vocadiary_entries');
+            const rawActiveId = localStorage.getItem('vocadiary_active_id');
+            const rawReveal = localStorage.getItem('vocadiary_reveal_state');
+
+            if (rawEntries) {
+                try { diaryEntries = JSON.parse(rawEntries); } 
+                catch(e) { diaryEntries = defaultDiaryEntries; }
+            } else {
+                diaryEntries = defaultDiaryEntries;
+            }
+
+            activeDiaryId = rawActiveId || (diaryEntries.length > 0 ? diaryEntries[0].id : '');
+
+            if (rawReveal) {
+                try { wordRevealState = JSON.parse(rawReveal); } 
+                catch(e) { wordRevealState = {}; }
+            }
+        }
+
+        function selectDiary(id) {
+            activeDiaryId = id;
+            saveStateToLocalStorage();
+            renderDiaryTimeline();
+            loadActiveDiary(id);
+        }
+
+        function renderDiaryTimeline() {
+            const container = document.getElementById('diary-list-container');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            document.getElementById('diary-count-badge').textContent = diaryEntries.length;
+
+            if (diaryEntries.length === 0) {
+                if (diarySortable) { diarySortable.destroy(); diarySortable = null; }
+                container.innerHTML = `
+                    <div class="text-center py-8 text-diary-darkSoftText">
+                        <i class="fa-regular fa-folder-open text-3xl mb-2 block text-gray-600"></i>
+                        <span class="text-sm">다이어리가 존재하지 않습니다.<br>첫 일지를 만들어보세요!</span>
+                    </div>`;
+                return;
+            }
+
+            diaryEntries.forEach(diary => {
+                const isActive = diary.id === activeDiaryId;
+                const formattedDate = formatDateString(diary.date);
+                const wordCount = diary.words.length;
+                const memorizedCount = diary.words.filter(w => w.status === 'memorized').length;
+                const progressPercentage = wordCount > 0 ? Math.round((memorizedCount / wordCount) * 100) : 0;
+
+                const activeClasses = isActive 
+                    ? 'border-indigo-500 bg-indigo-950/20 shadow-sm' 
+                    : 'border-transparent bg-slate-800/40 hover:bg-slate-800 hover:border-diary-darkBorder';
+
+                const element = document.createElement('div');
+                element.className = `p-3.5 rounded-xl border-2 cursor-pointer transition-all ${activeClasses}`;
+                element.setAttribute('onclick', `selectDiary('${diary.id}')`);
+                
+                element.innerHTML = `
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center space-x-1.5">
+                            <div class="drag-handle cursor-grab active:cursor-grabbing text-slate-500 hover:text-indigo-500 px-1 transition-colors" title="순서 바꾸기" onclick="event.stopPropagation()">
+                                <i class="fa-solid fa-grip-vertical"></i>
+                            </div>
+                            <span class="text-[11px] font-bold text-indigo-400 tracking-wider flex items-center space-x-1">
+                                <i class="fa-regular fa-clock"></i><span>${formattedDate}</span>
+                            </span>
+                        </div>
+                        <div class="flex items-center space-x-1.5">
+                            <span class="text-[10px] bg-slate-700 border border-diary-darkBorder px-1.5 py-0.5 rounded font-medium text-gray-300">${wordCount} 단어</span>
+                            <button onclick="requestDeleteDiary(event, '${diary.id}')" title="삭제" class="text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-slate-800">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <h3 class="font-bold text-sm text-white line-clamp-1">${diary.title}</h3>
+                    <p class="text-xs text-diary-darkSoftText line-clamp-1 mt-0.5">${diary.desc || '일지 설명이 없습니다.'}</p>
+                    <div class="mt-2.5">
+                        <div class="flex items-center justify-between text-[10px] text-diary-darkSoftText mb-1">
+                            <span>달성률</span><span class="font-semibold text-indigo-400">${progressPercentage}%</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                            <div class="bg-indigo-500 h-full rounded-full transition-all duration-500" style="width: ${progressPercentage}%"></div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(element);
+            });
+
+            if (diarySortable) diarySortable.destroy();
+            diarySortable = new Sortable(container, {
+                animation: 150, handle: '.drag-handle', ghostClass: 'opacity-50',
+                onEnd: function (evt) {
+                    const movedItem = diaryEntries.splice(evt.oldIndex, 1)[0];
+                    diaryEntries.splice(evt.newIndex, 0, movedItem);
+                    saveStateToLocalStorage();
+                }
+            });
+        }
+
+        function formatDateString(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            if (parts.length === 3) return `${parts[0]}년 ${parts[1]}월 ${parts[2]}일`;
+            return dateStr;
+        }
+
+        function loadActiveDiary(id) {
+            const activeDiary = diaryEntries.find(d => d.id === id);
+            if (!activeDiary) {
+                if (diaryEntries.length > 0) {
+                    activeDiaryId = diaryEntries[0].id;
+                    saveStateToLocalStorage();
+                    loadActiveDiary(activeDiaryId);
+                } else {
+                    document.getElementById('active-diary-title').textContent = '새 다이어리를 추가해주세요';
+                    document.getElementById('active-diary-date').textContent = '';
+                    document.getElementById('active-diary-count').textContent = '0개의 단어 수록';
+                    document.getElementById('active-diary-desc').textContent = '나만의 공부 다이어리 일지를 만들고 단어 학습을 시작해 보세요!';
+                    document.getElementById('word-list-container').innerHTML = `
+                        <div class="flex flex-col items-center justify-center py-20 text-center text-diary-darkSoftText">
+                            <img src="https://placehold.co/100x100/4F46E5/FFFFFF?text=V" class="w-16 h-16 rounded-2xl shadow-lg opacity-40 mb-3 animate-pulse">
+                            <h3 class="font-bold text-white">다이어리 완성하기</h3>
+                            <p class="text-sm mt-1 max-w-sm">좌측 사이드바 상단 버튼을 클릭하여 새 다이어리를 추가하고 공부할 영단어들을 수집해보세요!</p>
+                        </div>`;
+                }
+                return;
+            }
+
+            document.getElementById('active-diary-date').textContent = formatDateString(activeDiary.date);
+            document.getElementById('active-diary-title').textContent = activeDiary.title;
+            document.getElementById('active-diary-count').textContent = `${activeDiary.words.length}개의 단어 수록`;
+            document.getElementById('active-diary-desc').textContent = activeDiary.desc || '오늘 새로 학습하는 어휘 목록입니다.';
+            renderActiveWords(activeDiary.words);
+        }
+
+        function renderActiveWords(words) {
+            const container = document.getElementById('word-list-container');
+            container.innerHTML = '';
+
+            if (words.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-16 text-diary-darkSoftText">
+                        <i class="fa-solid fa-paragraph text-3xl mb-2 text-gray-600"></i>
+                        <p class="text-sm">다이어리에 등록된 단어가 없습니다.<br>하단에서 첫 영단어를 작성하여 추가해 보세요!</p>
+                    </div>`;
+                return;
+            }
+
+            words.forEach((w) => {
+                const isRevealed = wordRevealState[w.id] === true;
+                const isMemorized = w.status === 'memorized';
+                const cardEl = document.createElement('div');
+                cardEl.className = `flex flex-col md:flex-row items-stretch bg-diary-darkCard border border-diary-darkBorder rounded-xl overflow-hidden hover:shadow-md transition-all divide-y md:divide-y-0 md:divide-x divide-diary-darkBorder ${isMemorized ? 'border-l-4 border-l-green-500' : 'border-l-4 border-l-amber-400'}`;
+                
+                cardEl.innerHTML = `
+                    <div class="flex-1 p-4 flex items-center justify-between bg-diary-darkCard">
+                        <div class="flex items-center space-x-3">
+                            <button onclick="toggleWordStatus(event, '${w.id}')" 
+                                    class="w-7 h-7 rounded-full flex items-center justify-center border transition-all ${isMemorized ? 'bg-emerald-950/40 border-green-800 text-green-400' : 'border-slate-700 text-slate-600 hover:border-amber-400 hover:text-amber-500'}">
+                                <i class="fa-solid ${isMemorized ? 'fa-circle-check' : 'fa-check'} text-sm"></i>
+                            </button>
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <h3 class="font-bold text-base sm:text-lg text-white tracking-tight">${w.word}</h3>
+                                    ${w.pos ? `<span class="text-[9px] sm:text-[10px] bg-indigo-950/60 text-indigo-300 px-1.5 py-0.5 rounded font-semibold">${w.pos}</span>` : ''}
+                                </div>
+                                ${w.pronunciation && w.pronunciation !== '없음' ? `<p class="text-[11px] text-diary-darkSoftText mt-0.5 font-medium">[발음: ${w.pronunciation}]</p>` : ''}
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-1.5">
+                            <button id="speaker-btn-${w.id}" onclick="speakWord(event, '${w.word}', '${w.id}')" class="w-9 h-9 bg-slate-800 text-gray-400 hover:text-indigo-400 hover:bg-slate-700 rounded-lg flex items-center justify-center transition-colors">
+                                <i class="fa-solid fa-volume-high"></i>
+                            </button>
+                            <button onclick="requestEditWord(event, '${w.id}')" class="w-9 h-9 bg-slate-800 text-slate-500 hover:text-indigo-400 hover:bg-slate-700 rounded-lg flex items-center justify-center transition-colors">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="requestDeleteWord(event, '${w.id}')" class="w-9 h-9 bg-slate-800 text-slate-500 hover:text-red-500 hover:bg-slate-700 rounded-lg flex items-center justify-center transition-colors">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div onclick="toggleMeaning('${w.id}')" class="flex-1 p-4 cursor-pointer relative select-none flex items-center transition-all ${isRevealed ? 'bg-indigo-950/10' : 'bg-slate-800/80 hover:bg-slate-800'}">
+                        <div class="w-full flex items-center justify-center space-x-2 transition-all ${isRevealed ? 'hidden' : 'flex'}" id="cover-${w.id}">
+                            <i class="fa-solid fa-eye-slash text-gray-400 text-xs"></i>
+                            <span class="text-xs font-semibold text-diary-darkSoftText tracking-wider">뜻 가려짐 (클릭하여 보기)</span>
+                        </div>
+                        <div class="w-full flex items-center justify-between transition-all ${isRevealed ? 'flex' : 'hidden'}" id="meaning-${w.id}">
+                            <div class="pr-2">
+                                <span class="text-xs text-indigo-400 font-semibold block mb-0.5">한글 뜻</span>
+                                <p class="text-sm font-bold text-white">${w.meaning}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(cardEl);
+            });
+        }
+
+        function toggleWordStatus(event, wordId) {
+            event.stopPropagation();
+            diaryEntries.forEach(diary => {
+                const word = diary.words.find(w => w.id === wordId);
+                if (word) word.status = word.status === 'memorized' ? 'learning' : 'memorized';
+            });
+            saveStateToLocalStorage();
+            renderDiaryTimeline();
+            loadActiveDiary(activeDiaryId);
+            updateGlobalStats();
+        }
+
+        function addWordToActiveDiary() {
+            const wordVal = document.getElementById('quick-word-input').value.trim();
+            const posVal = document.getElementById('quick-pos-input').value;
+            const pronunciationVal = document.getElementById('quick-pronunciation-input').value.trim();
+            const meaningVal = document.getElementById('quick-meaning-input').value.trim();
+
+            if (!wordVal || !meaningVal) return showToast('영어 단어와 한글 뜻을 꼭 채워주셔야 합니다.', 'warning');
+            
+            const activeDiary = diaryEntries.find(d => d.id === activeDiaryId);
+            if (!activeDiary) return showToast('새 다이어리를 먼저 만들어주세요.', 'warning');
+
+            activeDiary.words.push({
+                id: 'w-' + Date.now(),
+                word: wordVal, pos: posVal,
+                pronunciation: pronunciationVal || '없음',
+                meaning: meaningVal, status: 'learning'
+            });
+
+            saveStateToLocalStorage();
+            document.getElementById('quick-word-input').value = '';
+            document.getElementById('quick-pronunciation-input').value = '';
+            document.getElementById('quick-meaning-input').value = '';
+            
+            renderDiaryTimeline();
+            loadActiveDiary(activeDiaryId);
+            updateGlobalStats();
+            showToast(`단어 "${wordVal}" 등록 완료!`, 'success');
+        }
+
+        function exportCSV() {
+            const activeDiary = diaryEntries.find(d => d.id === activeDiaryId);
+            if (!activeDiary || activeDiary.words.length === 0) return showToast('내보낼 수 있는 단어가 존재하지 않습니다.', 'warning');
+
+            let csvContent = "\uFEFF영어단어,품사,한글발음,한글뜻,암기여부\n";
+            activeDiary.words.forEach(w => {
+                const statusStr = w.status === 'memorized' ? '암기완료' : '공부중';
+                const wE = w.word.replace(/"/g, '""'), mE = w.meaning.replace(/"/g, '""');
+                csvContent += `"${wE}","${w.pos}","${w.pronunciation || '없음'}","${mE}","${statusStr}"\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `vocadiary_${activeDiary.title.replace(/\s+/g, '_')}.csv`;
+            link.click();
+            showToast('CSV 내보내기가 완료되었습니다.', 'success');
+        }
+
+        function importCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const activeDiary = diaryEntries.find(d => d.id === activeDiaryId);
+            if (!activeDiary) return showToast('다이어리를 먼저 만들어주세요.', 'warning');
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const lines = e.target.result.split(/\r?\n/);
+                let count = 0;
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    const matches = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || line.split(',');
+                    if (matches.length >= 2) {
+                        const word = matches[0].replace(/^"|"$/g, '').trim();
+                        const pos = matches[1] ? matches[1].replace(/^"|"$/g, '').trim() : '형용사';
+                        const pronunciation = matches[2] ? matches[2].replace(/^"|"$/g, '').trim() : '없음';
+                        const meaning = matches[3] ? matches[3].replace(/^"|"$/g, '').trim() : '';
+                        const statusRaw = matches[4] ? matches[4].replace(/^"|"$/g, '').trim() : 'learning';
+
+                        if (word && meaning) {
+                            activeDiary.words.push({
+                                id: 'w-csv-' + Date.now() + '-' + i, word, pos, pronunciation, meaning,
+                                status: (statusRaw === '암기완료' || statusRaw === 'memorized') ? 'memorized' : 'learning'
+                            });
+                            count++;
+                        }
+                    }
+                }
+                if (count > 0) {
+                    saveStateToLocalStorage();
+                    renderDiaryTimeline();
+                    loadActiveDiary(activeDiaryId);
+                    updateGlobalStats();
+                    closeSettingsModal();
+                    showToast(`CSV로부터 ${count}개 단어 등록 완료!`, 'success');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function requestDeleteDiary(event, diaryId) {
+            event.stopPropagation();
+            openConfirmModal({
+                title: '일지 삭제 확인',
+                body: '정말 이 단어 다이어리를 완전 삭제하시겠습니까? 복구되지 않습니다.',
+                iconClass: 'fa-solid fa-trash-can text-red-500', btnColorClass: 'bg-red-500 hover:bg-red-600',
+                action: () => {
+                    diaryEntries = diaryEntries.filter(d => d.id !== diaryId);
+                    if (activeDiaryId === diaryId) activeDiaryId = diaryEntries.length > 0 ? diaryEntries[0].id : '';
+                    saveStateToLocalStorage(); renderDiaryTimeline(); loadActiveDiary(activeDiaryId); updateGlobalStats();
+                    showToast('단어 일지가 삭제되었습니다.', 'info');
+                }
+            });
+        }
+
+        function requestDeleteWord(event, wordId) {
+            event.stopPropagation();
+            openConfirmModal({
+                title: '영단어 삭제', body: '선택한 영단어를 지우시겠습니까?',
+                iconClass: 'fa-solid fa-eraser text-amber-500', btnColorClass: 'bg-amber-500 hover:bg-amber-600',
+                action: () => {
+                    const activeDiary = diaryEntries.find(d => d.id === activeDiaryId);
+                    if (activeDiary) { activeDiary.words = activeDiary.words.filter(w => w.id !== wordId); delete wordRevealState[wordId]; }
+                    saveStateToLocalStorage(); renderDiaryTimeline(); loadActiveDiary(activeDiaryId); updateGlobalStats();
+                    showToast('단어가 삭제되었습니다.', 'info');
+                }
+            });
+        }
+
+        function requestClearAllData() {
+            openConfirmModal({
+                title: '⚠️ 공장 초기화', body: '모든 다이어리와 로컬 데이터를 전면 삭제합니다. 되돌릴 수 없습니다.',
+                iconClass: 'fa-solid fa-triangle-exclamation text-red-600', btnColorClass: 'bg-red-600 hover:bg-red-700',
+                action: () => {
+                    diaryEntries = []; activeDiaryId = ''; wordRevealState = {};
+                    localStorage.removeItem('vocadiary_entries'); localStorage.removeItem('vocadiary_active_id'); localStorage.removeItem('vocadiary_reveal_state');
+                    renderDiaryTimeline(); loadActiveDiary(activeDiaryId); updateGlobalStats(); closeSettingsModal();
+                    showToast('전면 초기화 완료.', 'info');
+                }
+            });
+        }
+
+        // Active Key resolver
+        function getActiveApiKey() {
+            const customKey = localStorage.getItem('vocadiary_custom_api_key');
+            if (customKey && customKey.trim() !== '') return customKey.trim();
+            return apiKey;
+        }
+
+        // 핵심: aq 토큰이든, 일반 API 키이든 모바일 환경에서의 CORS 차단을 막기 위해 "무조건 ?key= 파라미터 방식"으로 통일 전송
+        function getApiRequestConfig(modelName) {
+            const activeKey = getActiveApiKey();
+            if (!activeKey) {
+                showToast('설정(⚙️) 메뉴에서 본인의 Gemini API Key를 등록해 주세요.', 'warning');
+                throw new Error("Gemini API key is not configured.");
+            }
+            const trimmedKey = activeKey.trim();
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${trimmedKey}`;
+            const headers = { 'Content-Type': 'application/json' };
+            return { apiUrl, headers };
+        }
+
+        async function parseGoogleError(response) {
+            let errorMsg = `HTTP 에러 (상태 코드: ${response.status})`;
+            try {
+                const errData = await response.json();
+                if (errData?.error?.message) errorMsg = errData.error.message;
+                else if (errData?.error?.status) errorMsg = errData.error.status;
+            } catch(e) {}
+            return errorMsg;
+        }
+
+        async function callGeminiApi(word) {
+            const activeKey = getActiveApiKey();
+            if (!activeKey) throw new Error("설정(⚙️) 메뉴에서 Gemini API Key를 등록해 주세요.");
+
+            // 사용자 요청에 따른 최신 Gemini 3.5 모델 최우선 반영 및 Fallback 배열
+            const models = ['gemini-3.5-flash', 'gemini-2.5-flash-preview-09-2025', 'gemini-1.5-flash'];
+            let lastError = null;
+
+            for (const model of models) {
+                try {
+                    const config = getApiRequestConfig(model);
+                    const { apiUrl, headers } = config;
+                    
+                    const systemPrompt = "You are a highly accurate English-Korean dictionary. For the given English word, provide its primary part of speech, its approximate Korean pronunciation, and its main Korean meanings. The part of speech must be translated to one of these exact Korean terms: '형용사', '명사', '동사', '부사', '전치사', '접속사', '대명사'.";
+                    const payload = {
+                        contents: [{ parts: [{ text: `Lookup the word: "${word}"` }] }],
+                        generationConfig: {
+                            responseMimeType: "application/json",
+                            responseSchema: {
+                                type: "OBJECT",
+                                properties: {
+                                    pos: { type: "STRING" },
+                                    pronunciation: { type: "STRING" },
+                                    meaning: { type: "STRING" }
+                                },
+                                required: ["pos", "pronunciation", "meaning"]
+                            }
+                        },
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    };
+
+                    const response = await fetch(apiUrl, { method: 'POST', headers, body: JSON.stringify(payload) });
+                    if (!response.ok) throw new Error(await parseGoogleError(response));
+                    
+                    const result = await response.json();
+                    const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (text) return JSON.parse(text);
+                    throw new Error("올바르지 않은 응답 포맷");
+                } catch (err) {
+                    lastError = err;
+                }
+            }
+            throw lastError;
+        }
+
+        async function autoFillWord(type) {
+            const wordInput = document.getElementById(`${type}-word-input`);
+            const wandIcon = document.getElementById(`${type}-wand-icon`);
+            const btn = document.getElementById(`${type}-autofill-btn`);
+            
+            const word = wordInput.value.trim();
+            if (!word) return showToast('먼저 영어 단어를 입력해 주세요!', 'warning');
+
+            if (wandIcon) wandIcon.className = "fa-solid fa-spinner fa-spin text-indigo-400";
+            if (btn) btn.disabled = true;
+
+            try {
+                const data = await callGeminiApi(word);
+                if (data) {
+                    const posInput = document.getElementById(`${type}-pos-input`);
+                    if (posInput && ['형용사', '명사', '동사', '부사', '전치사', '접속사', '대명사'].includes(data.pos)) posInput.value = data.pos;
+                    else if (posInput) posInput.value = '명사';
+
+                    const pronInput = document.getElementById(`${type}-pronunciation-input`);
+                    if (pronInput) pronInput.value = data.pronunciation || '';
+                    
+                    const meaningInput = document.getElementById(`${type}-meaning-input`);
+                    if (meaningInput) meaningInput.value = data.meaning || '';
+
+                    showToast(`"${word}" AI 단어 완성이 완료되었습니다.`, 'success');
+                }
+            } catch (error) {
+                showToast(`AI 통신 실패: ${error.message}`, 'warning');
+            } finally {
+                if (wandIcon) wandIcon.className = "fa-solid fa-wand-magic-sparkles";
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        function openConfirmModal(config) {
+            document.getElementById('confirm-modal-title').textContent = config.title;
+            document.getElementById('confirm-modal-body').textContent = config.body;
+            document.getElementById('confirm-modal-icon').className = config.iconClass || 'fa-solid fa-circle-question';
+            const execBtn = document.getElementById('confirm-execute-btn');
+            execBtn.className = `flex-1 py-2.5 text-sm font-semibold text-white rounded-xl shadow-md transition-colors ${config.btnColorClass}`;
+            pendingConfirmAction = config.action;
+            const modal = document.getElementById('confirm-modal'), content = document.getElementById('confirm-modal-content');
+            modal.classList.remove('hidden'); setTimeout(() => content.classList.remove('scale-95', 'opacity-0'), 50);
+        }
+        function closeConfirmModal() {
+            const modal = document.getElementById('confirm-modal'), content = document.getElementById('confirm-modal-content');
+            content.classList.add('scale-95', 'opacity-0'); setTimeout(() => { modal.classList.add('hidden'); pendingConfirmAction = null; }, 300);
+        }
+        document.getElementById('confirm-execute-btn').addEventListener('click', () => { if (pendingConfirmAction) pendingConfirmAction(); closeConfirmModal(); });
+
+        let wordToEditId = null;
+        function requestEditWord(event, wordId) {
+            event.stopPropagation();
+            const activeDiary = diaryEntries.find(d => d.id === activeDiaryId); if (!activeDiary) return;
+            const wordObj = activeDiary.words.find(w => w.id === wordId); if (!wordObj) return;
+            wordToEditId = wordId;
+            document.getElementById('edit-word-input').value = wordObj.word;
+            document.getElementById('edit-pos-input').value = wordObj.pos || '형용사';
+            document.getElementById('edit-pronunciation-input').value = wordObj.pronunciation === '없음' ? '' : (wordObj.pronunciation || '');
+            document.getElementById('edit-meaning-input').value = wordObj.meaning;
+            openEditWordModal();
+        }
+        function openEditWordModal() {
+            const modal = document.getElementById('edit-word-modal'), content = document.getElementById('edit-word-modal-content');
+            modal.classList.remove('hidden'); setTimeout(() => content.classList.remove('scale-95', 'opacity-0'), 50);
+        }
+        function closeEditWordModal() {
+            const modal = document.getElementById('edit-word-modal'), content = document.getElementById('edit-word-modal-content');
+            content.classList.add('scale-95', 'opacity-0'); setTimeout(() => { modal.classList.add('hidden'); wordToEditId = null; }, 300);
+        }
+        function handleEditWordSubmit(event) {
+            event.preventDefault();
+            if (!wordToEditId) return;
+            const activeDiary = diaryEntries.find(d => d.id === activeDiaryId); if (!activeDiary) return;
+            const wordObj = activeDiary.words.find(w => w.id === wordToEditId); if (!wordObj) return;
+            const wordVal = document.getElementById('edit-word-input').value.trim();
+            const posVal = document.getElementById('edit-pos-input').value;
+            const pronunciationVal = document.getElementById('edit-pronunciation-input').value.trim();
+            const meaningVal = document.getElementById('edit-meaning-input').value.trim();
+            if (!wordVal || !meaningVal) return showToast('단어와 뜻은 빠짐없이 채워야 합니다.', 'warning');
+            wordObj.word = wordVal; wordObj.pos = posVal; wordObj.pronunciation = pronunciationVal || '없음'; wordObj.meaning = meaningVal;
+            saveStateToLocalStorage(); closeEditWordModal(); loadActiveDiary(activeDiaryId); updateGlobalStats();
+            showToast('수정되었습니다.', 'success');
+        }
+
+        function handleGlobalSearch(e) {
+            const query = e.target.value.toLowerCase().trim();
+            const globalSearch = document.getElementById('global-search');
+            const mobileSearch = document.getElementById('mobile-search-input');
+            if (globalSearch) globalSearch.value = e.target.value;
+            if (mobileSearch) mobileSearch.value = e.target.value;
+
+            if (!query) return loadActiveDiary(activeDiaryId);
+
+            let matchedWords = [];
+            diaryEntries.forEach(diary => {
+                diary.words.forEach(w => {
+                    if (w.word.toLowerCase().includes(query) || w.meaning.toLowerCase().includes(query)) {
+                        matchedWords.push({ ...w, diaryTitle: diary.title });
+                    }
+                });
+            });
+
+            const container = document.getElementById('word-list-container'); container.innerHTML = '';
+            document.getElementById('active-diary-title').textContent = `🔍 "${query}" 통합 검색 결과`;
+            document.getElementById('active-diary-count').textContent = `총 ${matchedWords.length}개 발견`;
+            document.getElementById('active-diary-desc').textContent = '전체 일지 데이터를 관통하여 검색한 목록을 보여줍니다.';
+
+            if (matchedWords.length === 0) {
+                container.innerHTML = `<div class="text-center py-16 text-diary-darkSoftText"><i class="fa-solid fa-face-frown text-3xl mb-2 text-gray-600"></i><p class="text-sm">검색 결과가 없습니다.</p></div>`; return;
+            }
+
+            matchedWords.forEach((w) => {
+                const isRevealed = wordRevealState[w.id] === true;
+                const isMemorized = w.status === 'memorized';
+                const cardEl = document.createElement('div');
+                cardEl.className = `flex flex-col md:flex-row items-stretch bg-diary-darkCard border border-diary-darkBorder rounded-xl overflow-hidden hover:shadow-md transition-all divide-y md:divide-y-0 md:divide-x divide-diary-darkBorder ${isMemorized ? 'border-l-4 border-l-green-500' : 'border-l-4 border-l-amber-400'}`;
+                cardEl.innerHTML = `
+                    <div class="flex-1 p-4 bg-diary-darkCard flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <span class="w-6 h-6 rounded-full flex items-center justify-center bg-slate-800 text-gray-400"><i class="fa-solid fa-hashtag text-[10px]"></i></span>
+                            <div>
+                                <div class="flex items-center space-x-2"><h3 class="font-bold text-base sm:text-lg text-white tracking-tight">${w.word}</h3>${w.pos ? `<span class="text-[10px] bg-indigo-950/70 text-indigo-300 px-1.5 py-0.5 rounded font-medium">${w.pos}</span>` : ''}</div>
+                                ${w.pronunciation && w.pronunciation !== '없음' ? `<p class="text-xs text-diary-darkSoftText mt-0.5 font-medium">[발음: ${w.pronunciation}]</p>` : ''}
+                                <span class="text-[9px] bg-slate-800 text-slate-400 px-1 py-0.5 rounded block mt-1 w-max font-semibold">${w.diaryTitle}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-1.5">
+                            <button onclick="speakWord(event, '${w.word}', '${w.id}')" class="w-9 h-9 bg-slate-800 text-gray-400 hover:text-indigo-400 rounded-lg flex items-center justify-center transition-colors"><i class="fa-solid fa-volume-high"></i></button>
+                            <button onclick="requestEditWord(event, '${w.id}')" class="w-9 h-9 bg-slate-800 text-slate-500 hover:text-indigo-400 rounded-lg flex items-center justify-center transition-colors"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="requestDeleteWord(event, '${w.id}')" class="w-9 h-9 bg-slate-800 text-slate-500 hover:text-red-500 rounded-lg flex items-center justify-center transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </div>
+                    <div onclick="toggleMeaning('${w.id}')" class="flex-1 p-4 cursor-pointer relative select-none flex items-center transition-all ${isRevealed ? 'bg-indigo-950/10' : 'bg-slate-800 hover:bg-slate-700'}">
+                        <div class="w-full flex items-center justify-center space-x-2 transition-all ${isRevealed ? 'hidden' : 'flex'}"><i class="fa-solid fa-eye-slash text-gray-400 text-xs"></i><span class="text-xs font-semibold text-diary-darkSoftText tracking-wider">가려짐 (클릭하여 뜻 보기)</span></div>
+                        <div class="w-full flex items-center justify-between transition-all ${isRevealed ? 'flex' : 'hidden'}"><div><span class="text-xs text-indigo-400 font-semibold block">뜻풀이</span><p class="text-sm font-bold text-white">${w.meaning}</p></div></div>
+                    </div>
+                `;
+                container.appendChild(cardEl);
+            });
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(diaryEntries, null, 2);
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr));
+            linkElement.setAttribute('download', `vocadiary_backup_${new Date().toISOString().slice(0,10)}.json`);
+            linkElement.click(); showToast('단어장 백업 완료.', 'success');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        diaryEntries = imported; activeDiaryId = diaryEntries.length > 0 ? diaryEntries[0].id : '';
+                        saveStateToLocalStorage(); renderDiaryTimeline(); loadActiveDiary(activeDiaryId); updateGlobalStats(); closeSettingsModal();
+                        showToast('복원 완료되었습니다!', 'success');
+                    }
+                } catch(err) { showToast('파일 파싱 에러.', 'warning'); }
+            }; reader.readAsText(file);
+        }
+
+        function openNewDiaryModal() {
+            const modal = document.getElementById('new-diary-modal'), content = document.getElementById('new-diary-modal-content');
+            modal.classList.remove('hidden'); setTimeout(() => content.classList.remove('scale-95', 'opacity-0'), 50);
+        }
+        function closeNewDiaryModal() {
+            const modal = document.getElementById('new-diary-modal'), content = document.getElementById('new-diary-modal-content');
+            content.classList.add('scale-95', 'opacity-0'); setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+        function openInstallModal() {
+            const modal = document.getElementById('install-modal'), content = document.getElementById('install-modal-content');
+            modal.classList.remove('hidden'); setTimeout(() => content.classList.remove('scale-95', 'opacity-0'), 50);
+        }
+        function closeInstallModal() {
+            const modal = document.getElementById('install-modal'), content = document.getElementById('install-modal-content');
+            content.classList.add('scale-95', 'opacity-0'); setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+        function openSettingsModal() {
+            const modal = document.getElementById('settings-modal'), content = document.getElementById('settings-modal-content');
+            document.getElementById('settings-api-key').value = localStorage.getItem('vocadiary_custom_api_key') || '';
+            updateApiKeyStatusUI();
+            modal.classList.remove('hidden'); setTimeout(() => content.classList.remove('scale-95', 'opacity-0'), 50);
+        }
+        function closeSettingsModal() {
+            const modal = document.getElementById('settings-modal'), content = document.getElementById('settings-modal-content');
+            content.classList.add('scale-95', 'opacity-0'); setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function saveCustomApiKey() {
+            localStorage.setItem('vocadiary_custom_api_key', document.getElementById('settings-api-key').value.trim());
+            updateApiKeyStatusUI(); showToast('Gemini API Key 저장됨.', 'success');
+        }
+
+        function updateApiKeyStatusUI() {
+            const savedKey = localStorage.getItem('vocadiary_custom_api_key') || '';
+            const statusBadge = document.getElementById('api-key-status-badge');
+            if (statusBadge) {
+                if (savedKey.trim() !== '') {
+                    statusBadge.className = "text-[9px] bg-emerald-950/80 text-emerald-400 px-1.5 py-0.5 rounded font-semibold"; statusBadge.textContent = "개인 API Key 활성화됨";
+                } else {
+                    statusBadge.className = "text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded font-semibold"; statusBadge.textContent = "키 없음";
+                }
+            }
+        }
+
+        function handleCreateDiarySubmit(event) {
+            event.preventDefault();
+            const dateVal = document.getElementById('modal-diary-date').value, titleVal = document.getElementById('modal-diary-title').value.trim();
+            const descVal = document.getElementById('modal-diary-desc').value.trim(), addSamples = document.getElementById('modal-diary-setup-samples').checked;
+            if (!dateVal || !titleVal) return showToast('정확한 날짜와 제목을 입력해주십시오.', 'warning');
+            
+            let initialWords = addSamples ? [
+                { id: 's-1', word: 'Aesthetic', pos: '형용사', pronunciation: '에스데틱', meaning: '미학적인, 심미적인', status: 'learning' },
+                { id: 's-2', word: 'Pragmatic', pos: '형용사', pronunciation: '프래그매틱', meaning: '실용적인, 실무적인', status: 'learning' },
+            ] : [];
+            const newDiary = { id: 'diary-' + Date.now(), date: dateVal, title: titleVal, desc: descVal, words: initialWords };
+            diaryEntries.unshift(newDiary); activeDiaryId = newDiary.id; saveStateToLocalStorage();
+            document.getElementById('modal-diary-title').value = ''; document.getElementById('modal-diary-desc').value = '';
+            closeNewDiaryModal(); renderDiaryTimeline(); loadActiveDiary(activeDiaryId); updateGlobalStats(); showToast('일지 생성 완료!', 'success');
+        }
+
+        function toggleMobileSearch() {
+            const searchBar = document.getElementById('mobile-search-bar'); searchBar.classList.toggle('hidden');
+            if (!searchBar.classList.contains('hidden')) document.getElementById('mobile-search-input').focus();
+        }
+
+        function startQuiz() {
+            const activeDiary = diaryEntries.find(d => d.id === activeDiaryId);
+            if (!activeDiary || activeDiary.words.length < 2) return showToast('퀴즈를 위해 단어가 2개 이상 필요합니다.', 'warning');
+            quizWordsList = [...activeDiary.words].sort(() => Math.random() - 0.5).slice(0, 5);
+            currentQuizIndex = 0; quizCorrectAnswers = 0;
+            document.getElementById('quiz-modal').classList.remove('hidden'); document.getElementById('quiz-state-play').classList.remove('hidden'); document.getElementById('quiz-state-result').classList.add('hidden');
+            renderQuizQuestion();
+        }
+        function closeQuiz() { document.getElementById('quiz-modal').classList.add('hidden'); loadActiveDiary(activeDiaryId); updateGlobalStats(); }
+
+        function renderQuizQuestion() {
+            const currentQ = quizWordsList[currentQuizIndex];
+            document.getElementById('quiz-question-counter').textContent = `퀴즈 Q ${currentQuizIndex + 1} / ${quizWordsList.length}`;
+            document.getElementById('quiz-progress-bar').style.width = `${((currentQuizIndex + 1) / quizWordsList.length) * 100}%`;
+            document.getElementById('quiz-question-pos').textContent = currentQ.pos || '단어';
+            document.getElementById('quiz-question-word').textContent = currentQ.word;
+            document.getElementById('quiz-question-pron').textContent = currentQ.pronunciation && currentQ.pronunciation !== '없음' ? `[${currentQ.pronunciation}]` : '';
+
+            let pool = []; diaryEntries.forEach(d => d.words.forEach(w => { if (w.meaning !== currentQ.meaning) pool.push(w.meaning); }));
+            let options = [currentQ.meaning, ...pool.sort(() => Math.random() - 0.5).slice(0, 2)].sort(() => Math.random() - 0.5);
+            const optionsContainer = document.getElementById('quiz-options-container'); optionsContainer.innerHTML = '';
+            options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-3.5 bg-slate-800 hover:bg-slate-700/60 border border-diary-darkBorder rounded-2xl text-sm font-semibold transition-all flex items-center justify-between";
+                btn.innerHTML = `<span>${idx + 1}. &nbsp; ${opt}</span><i class="fa-solid fa-circle-notch text-gray-600"></i>`;
+                btn.setAttribute('onclick', `checkQuizAnswer(this, "${opt.replace(/"/g, '&quot;')}", "${currentQ.meaning.replace(/"/g, '&quot;')}")`);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function checkQuizAnswer(selectedButton, selectedOpt, correctOpt) {
+            const buttons = document.getElementById('quiz-options-container').querySelectorAll('button'); buttons.forEach(btn => btn.disabled = true);
+            if (selectedOpt === correctOpt) {
+                selectedButton.className = "w-full text-left p-3.5 bg-green-500/25 text-green-400 border-2 border-green-500 rounded-2xl text-sm font-bold transition-all flex items-center justify-between";
+                selectedButton.querySelector('i').className = "fa-solid fa-circle-check text-green-500 text-lg"; quizCorrectAnswers++;
+            } else {
+                selectedButton.className = "w-full text-left p-3.5 bg-red-500/25 text-red-400 border-2 border-red-500 rounded-2xl text-sm font-bold transition-all flex items-center justify-between";
+                selectedButton.querySelector('i').className = "fa-solid fa-circle-xmark text-red-500 text-lg";
+                buttons.forEach(btn => { if (btn.textContent.includes(correctOpt)) btn.className = "w-full text-left p-3.5 bg-green-500/10 text-green-400 border border-green-400/40 rounded-2xl text-sm font-semibold transition-all flex items-center justify-between"; });
+            }
+            setTimeout(() => { currentQuizIndex++; if (currentQuizIndex < quizWordsList.length) renderQuizQuestion(); else showQuizResults(); }, 1200);
+        }
+
+        function showQuizResults() {
+            document.getElementById('quiz-state-play').classList.add('hidden'); document.getElementById('quiz-state-result').classList.remove('hidden');
+            document.getElementById('quiz-result-score').textContent = `${quizCorrectAnswers} / ${quizWordsList.length} 개`;
+            const ratio = quizCorrectAnswers / quizWordsList.length;
+            document.getElementById('quiz-result-feedback').textContent = ratio === 1 ? '👑 완벽합니다!' : ratio >= 0.7 ? '👍 훌륭합니다!' : '📚 오답 노트를 복습해보세요!';
+        }
+
+        function openStoryCreator() {
+            const activeDiary = diaryEntries.find(d => d.id === activeDiaryId);
+            if (!activeDiary || activeDiary.words.length === 0) return showToast('이야기로 엮을 수 있는 단어가 없습니다.', 'warning');
+            const checklistContainer = document.getElementById('story-checklist-container'); checklistContainer.innerHTML = '';
+            activeDiary.words.forEach(w => {
+                const label = document.createElement('label'); label.className = "flex items-center space-x-3 p-2 bg-slate-800/80 border border-diary-darkBorder rounded-xl hover:border-violet-800 cursor-pointer";
+                label.innerHTML = `<input type="checkbox" name="story-words" value="${w.id}" checked class="w-4 h-4 text-violet-600 rounded"><div class="text-xs"><span class="font-bold text-white block">${w.word}</span><span class="text-[10px] text-diary-darkSoftText">${w.meaning}</span></div>`;
+                checklistContainer.appendChild(label);
+            });
+            document.getElementById('story-empty-state').classList.remove('hidden'); document.getElementById('story-content-box').classList.add('hidden'); document.getElementById('story-content-footer').classList.add('hidden');
+            const modal = document.getElementById('story-modal'), content = document.getElementById('story-modal-content');
+            modal.classList.remove('hidden'); setTimeout(() => content.classList.remove('scale-95', 'opacity-0'), 50);
+        }
+        function closeStoryCreator() {
+            const modal = document.getElementById('story-modal'), content = document.getElementById('story-modal-content');
+            content.classList.add('scale-95', 'opacity-0'); setTimeout(() => { modal.classList.add('hidden'); document.getElementById('story-tooltip').classList.add('hidden'); }, 300);
+        }
+
+        async function generateAIStory() {
+            const checkboxes = document.querySelectorAll('input[name="story-words"]:checked');
+            if (checkboxes.length === 0) return showToast('단어를 1개 이상 골라주세요!', 'warning');
+            const activeDiary = diaryEntries.find(d => d.id === activeDiaryId); if (!activeDiary) return;
+            const selectedWords = Array.from(checkboxes).map(box => activeDiary.words.find(w => w.id === box.value)).filter(Boolean);
+
+            const loading = document.getElementById('story-loading-state'), generateBtn = document.getElementById('story-generate-btn');
+            loading.classList.remove('hidden'); generateBtn.disabled = true;
+
+            const activeKey = getActiveApiKey();
+            if (!activeKey) { showToast('설정(⚙️) 메뉴에서 Gemini API Key를 등록해 주세요.', 'warning'); loading.classList.add('hidden'); generateBtn.disabled = false; return; }
+
+            const models = ['gemini-3.5-flash', 'gemini-2.5-flash-preview-09-2025', 'gemini-1.5-flash'];
+            let storyData = null; let lastError = null;
+
+            for (const model of models) {
+                try {
+                    const config = getApiRequestConfig(model);
+                    const systemPrompt = "You are a creative English-Korean language teacher. Write a cohesive, entertaining Korean story (5-8 sentences) incorporating the provided English words. Return JSON containing 'title' and 'storySegments' (array of {type: 'text'|'word', content: '...', wordId: '...'}).";
+                    const payload = {
+                        contents: [{ parts: [{ text: `Create a story using these exact words with their corresponding IDs: ${JSON.stringify(selectedWords)}` }] }],
+                        generationConfig: { responseMimeType: "application/json", responseSchema: { type: "OBJECT", properties: { title: { type: "STRING" }, storySegments: { type: "ARRAY", items: { type: "OBJECT", properties: { type: { type: "STRING", enum: ["text", "word"] }, content: { type: "STRING" }, wordId: { type: "STRING" } }, required: ["type", "content"] } } }, required: ["title", "storySegments"] } },
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    };
+
+                    const response = await fetch(config.apiUrl, { method: 'POST', headers: config.headers, body: JSON.stringify(payload) });
+                    if (!response.ok) throw new Error(await parseGoogleError(response));
+                    const result = await response.json(); const jsonText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (!jsonText) throw new Error("No text candidate returned");
+                    storyData = JSON.parse(jsonText); break;
+                } catch (e) { lastError = e; }
+            }
+
+            if (storyData) renderStructuredStory(storyData, selectedWords);
+            else showToast(`AI 이야기 생성 실패: ${lastError ? lastError.message : '알 수 없는 오류'}`, 'warning');
+            
+            loading.classList.add('hidden'); generateBtn.disabled = false;
+        }
+
+        function renderStructuredStory(storyData, selectedWords) {
+            document.getElementById('story-empty-state').classList.add('hidden'); document.getElementById('story-content-box').classList.remove('hidden'); document.getElementById('story-content-footer').classList.remove('hidden');
+            document.getElementById('story-rendered-title').textContent = storyData.title || "AI 단어장 이야기";
+            const bodyPane = document.getElementById('story-rendered-body'); bodyPane.innerHTML = '';
+            storyData.storySegments.forEach(seg => {
+                if (seg.type === "text") bodyPane.appendChild(document.createTextNode(seg.content));
+                else if (seg.type === "word") {
+                    const matched = selectedWords.find(sw => sw.id === seg.wordId || sw.word.toLowerCase() === seg.content.toLowerCase());
+                    if (matched) {
+                        const wordSpan = document.createElement('span');
+                        wordSpan.className = "story-word-btn inline-block mx-1 px-2.5 py-0.5 rounded-lg bg-violet-950 text-violet-300 font-extrabold border border-violet-900 cursor-pointer shadow-sm active:scale-95 transition-all";
+                        wordSpan.textContent = seg.content;
+                        wordSpan.setAttribute('onclick', `triggerWordTooltip(event, this, "${matched.word}", "${matched.pos}", "${matched.pronunciation}", "${matched.meaning}")`);
+                        bodyPane.appendChild(wordSpan);
+                    } else bodyPane.appendChild(document.createTextNode(` ${seg.content} `));
+                }
+            });
+        }
+
+        function triggerWordTooltip(event, element, word, pos, pron, meaning) {
+            event.stopPropagation();
+            const tooltip = document.getElementById('story-tooltip');
+            document.getElementById('tooltip-pos').textContent = pos || '단어'; document.getElementById('tooltip-word').textContent = word; document.getElementById('tooltip-pron').textContent = pron && pron !== '없음' ? `[${pron}]` : ''; document.getElementById('tooltip-meaning').textContent = meaning;
+            tooltip.classList.remove('hidden');
+            const rect = element.getBoundingClientRect(), posX = rect.left + (rect.width / 2) + window.scrollX, posY = rect.top + window.scrollY - 8; 
+            tooltip.style.top = `${posY}px`;
+            const tooltipWidth = tooltip.offsetWidth || 180; let finalLeft = posX;
+            if (posX - (tooltipWidth / 2) < 16) finalLeft = (tooltipWidth / 2) + 16; else if (posX + (tooltipWidth / 2) > window.innerWidth - 16) finalLeft = window.innerWidth - (tooltipWidth / 2) - 16;
+            tooltip.style.left = `${finalLeft}px`;
+        }
+    </script>
+</body>
+</html>
