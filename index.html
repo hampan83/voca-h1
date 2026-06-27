@@ -210,7 +210,7 @@
                         <span id="active-diary-count" class="text-xs text-diary-darkSoftText">0개의 단어 수록</span>
                     </div>
                     <h2 id="active-diary-title" class="text-lg sm:text-xl font-bold text-white">단어장을 선택해주세요</h2>
-                    <p id="active-diary-desc" class="text-xs sm:text-sm text-diary-darkSoftText mt-0.5">선택된 일지에 대한 설명이 이곳에 보문을 보입니다.</p>
+                    <p id="active-diary-desc" class="text-xs sm:text-sm text-diary-darkSoftText mt-0.5">선택된 일지에 대한 설명이 이곳에 보입니다.</p>
                 </div>
                 
                 <!-- Word Management & Study Options -->
@@ -500,7 +500,8 @@
                     <button onclick="closeConfirmModal()" class="flex-1 py-2.5 text-sm font-semibold text-gray-300 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors">
                         취소
                     </button>
-                    <button id="confirm-execute-btn" class="flex-1 py-2.5 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-xl shadow-md transition-colors">
+                    <!-- FIX 1: 명확하게 클릭 함수 실행 -->
+                    <button id="confirm-execute-btn" onclick="executeConfirmAction()" class="flex-1 py-2.5 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-xl shadow-md transition-colors">
                         실행하기
                     </button>
                 </div>
@@ -694,9 +695,12 @@
         </div>
     </div>
 
-    <!-- Global Story Tooltip element overlay -->
-    <div id="story-tooltip" class="absolute hidden z-50 bg-white text-slate-900 p-3 rounded-xl shadow-2xl border border-slate-100 max-w-xs pointer-events-auto transform -translate-x-1/2 -translate-y-full transition-all duration-150">
-        <div class="flex flex-col text-center">
+    <!-- Global Story Tooltip element overlay (FIX 2: 명시적 X 버튼 및 여백 추가) -->
+    <div id="story-tooltip" class="absolute hidden z-50 bg-white text-slate-900 p-3 rounded-xl shadow-2xl border border-slate-100 min-w-[120px] max-w-xs pointer-events-auto transform -translate-x-1/2 -translate-y-full transition-all duration-150">
+        <button onclick="closeStoryTooltip(event)" class="absolute top-1 right-2 text-gray-400 hover:text-gray-600 p-1">
+            <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+        <div class="flex flex-col text-center mt-2">
             <span id="tooltip-pos" class="text-[9px] uppercase tracking-wider font-bold text-indigo-600 mb-0.5">품사</span>
             <span id="tooltip-word" class="font-extrabold text-sm mb-0.5">Word</span>
             <span id="tooltip-pron" class="text-[11px] opacity-75 mb-1.5">[발음]</span>
@@ -710,7 +714,7 @@
     <div id="toast-container" class="fixed bottom-5 right-5 z-[60] flex flex-col gap-2 pointer-events-none"></div>
 
     <script>
-        // Global API Key - The execution environment replaces this with the active key once at runtime.
+        // Global API Key
         const apiKey = "";
 
         // Default Mock Data
@@ -1103,6 +1107,24 @@
             });
         }
 
+        // [FIX 1&4 적용] 오류 발생 여부와 상관없이 확실히 업데이트 됨
+        function updateGlobalStats() {
+            let totalWords = 0;
+            let memorizedWords = 0;
+
+            diaryEntries.forEach(d => {
+                totalWords += d.words.length;
+                memorizedWords += d.words.filter(w => w.status === 'memorized').length;
+            });
+
+            const ratio = totalWords > 0 ? Math.round((memorizedWords / totalWords) * 100) : 0;
+
+            const totalBadge = document.getElementById('total-words-badge');
+            const completedBadge = document.getElementById('completed-words-badge');
+            if (totalBadge) totalBadge.textContent = totalWords;
+            if (completedBadge) completedBadge.textContent = `${ratio}%`;
+        }
+
         function toggleWordStatus(event, wordId) {
             event.stopPropagation();
             diaryEntries.forEach(diary => {
@@ -1163,43 +1185,55 @@
             showToast('CSV 내보내기가 완료되었습니다.', 'success');
         }
 
+        // [FIX 3 적용] 복원 중 예외처리를 강화하고 파일을 여러 번 불러올 수 있도록 보강
         function importCSV(event) {
             const file = event.target.files[0];
             if (!file) return;
             const activeDiary = diaryEntries.find(d => d.id === activeDiaryId);
-            if (!activeDiary) return showToast('다이어리를 먼저 만들어주세요.', 'warning');
+            if (!activeDiary) {
+                event.target.value = '';
+                return showToast('다이어리를 먼저 만들어주세요.', 'warning');
+            }
 
             const reader = new FileReader();
             reader.onload = function(e) {
-                const lines = e.target.result.split(/\r?\n/);
-                let count = 0;
-                for (let i = 1; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    if (!line) continue;
-                    const matches = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || line.split(',');
-                    if (matches.length >= 2) {
-                        const word = matches[0].replace(/^"|"$/g, '').trim();
-                        const pos = matches[1] ? matches[1].replace(/^"|"$/g, '').trim() : '형용사';
-                        const pronunciation = matches[2] ? matches[2].replace(/^"|"$/g, '').trim() : '없음';
-                        const meaning = matches[3] ? matches[3].replace(/^"|"$/g, '').trim() : '';
-                        const statusRaw = matches[4] ? matches[4].replace(/^"|"$/g, '').trim() : 'learning';
+                try {
+                    const lines = e.target.result.split(/\r?\n/);
+                    let count = 0;
+                    for (let i = 1; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (!line) continue;
+                        const matches = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || line.split(',');
+                        if (matches.length >= 2) {
+                            const word = matches[0].replace(/^"|"$/g, '').trim();
+                            const pos = matches[1] ? matches[1].replace(/^"|"$/g, '').trim() : '형용사';
+                            const pronunciation = matches[2] ? matches[2].replace(/^"|"$/g, '').trim() : '없음';
+                            const meaning = matches[3] ? matches[3].replace(/^"|"$/g, '').trim() : '';
+                            const statusRaw = matches[4] ? matches[4].replace(/^"|"$/g, '').trim() : 'learning';
 
-                        if (word && meaning) {
-                            activeDiary.words.push({
-                                id: 'w-csv-' + Date.now() + '-' + i, word, pos, pronunciation, meaning,
-                                status: (statusRaw === '암기완료' || statusRaw === 'memorized') ? 'memorized' : 'learning'
-                            });
-                            count++;
+                            if (word && meaning) {
+                                activeDiary.words.push({
+                                    id: 'w-csv-' + Date.now() + '-' + i, word, pos, pronunciation, meaning,
+                                    status: (statusRaw === '암기완료' || statusRaw === 'memorized') ? 'memorized' : 'learning'
+                                });
+                                count++;
+                            }
                         }
                     }
-                }
-                if (count > 0) {
-                    saveStateToLocalStorage();
-                    renderDiaryTimeline();
-                    loadActiveDiary(activeDiaryId);
-                    updateGlobalStats();
-                    closeSettingsModal();
-                    showToast(`CSV로부터 ${count}개 단어 등록 완료!`, 'success');
+                    if (count > 0) {
+                        saveStateToLocalStorage();
+                        renderDiaryTimeline();
+                        loadActiveDiary(activeDiaryId);
+                        updateGlobalStats();
+                        closeSettingsModal();
+                        showToast(`CSV로부터 ${count}개 단어 등록 완료!`, 'success');
+                    } else {
+                        showToast('지원하지 않는 형식이거나 단어가 없습니다.', 'warning');
+                    }
+                } catch(e) {
+                    showToast('파일 분석 중 에러가 발생했습니다.', 'warning');
+                } finally {
+                    event.target.value = '';
                 }
             };
             reader.readAsText(file);
@@ -1254,7 +1288,6 @@
             return apiKey;
         }
 
-        // 핵심: aq 토큰이든, 일반 API 키이든 모바일 환경에서의 CORS 차단을 막기 위해 "무조건 ?key= 파라미터 방식"으로 통일 전송
         function getApiRequestConfig(modelName) {
             const activeKey = getActiveApiKey();
             if (!activeKey) {
@@ -1281,7 +1314,6 @@
             const activeKey = getActiveApiKey();
             if (!activeKey) throw new Error("설정(⚙️) 메뉴에서 Gemini API Key를 등록해 주세요.");
 
-            // 사용자 요청에 따른 최신 Gemini 3.5 모델 최우선 반영 및 Fallback 배열
             const models = ['gemini-3.5-flash', 'gemini-2.5-flash-preview-09-2025', 'gemini-1.5-flash'];
             let lastError = null;
 
@@ -1356,6 +1388,7 @@
             }
         }
 
+        // [FIX 1&4 적용] 오류 때문에 닫히지 않는 현상 방지를 위해 실행 구조 재편 및 try/catch 적용
         function openConfirmModal(config) {
             document.getElementById('confirm-modal-title').textContent = config.title;
             document.getElementById('confirm-modal-body').textContent = config.body;
@@ -1366,11 +1399,20 @@
             const modal = document.getElementById('confirm-modal'), content = document.getElementById('confirm-modal-content');
             modal.classList.remove('hidden'); setTimeout(() => content.classList.remove('scale-95', 'opacity-0'), 50);
         }
+
         function closeConfirmModal() {
             const modal = document.getElementById('confirm-modal'), content = document.getElementById('confirm-modal-content');
             content.classList.add('scale-95', 'opacity-0'); setTimeout(() => { modal.classList.add('hidden'); pendingConfirmAction = null; }, 300);
         }
-        document.getElementById('confirm-execute-btn').addEventListener('click', () => { if (pendingConfirmAction) pendingConfirmAction(); closeConfirmModal(); });
+
+        function executeConfirmAction() {
+            const action = pendingConfirmAction;
+            closeConfirmModal(); // 무조건 먼저 닫습니다!
+            if (action) {
+                try { action(); } 
+                catch(e) { console.error("Action error: ", e); }
+            }
+        }
 
         let wordToEditId = null;
         function requestEditWord(event, wordId) {
@@ -1464,27 +1506,33 @@
             });
         }
 
-        function exportData() {
-            const dataStr = JSON.stringify(diaryEntries, null, 2);
-            const linkElement = document.createElement('a');
-            linkElement.setAttribute('href', 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr));
-            linkElement.setAttribute('download', `vocadiary_backup_${new Date().toISOString().slice(0,10)}.json`);
-            linkElement.click(); showToast('단어장 백업 완료.', 'success');
-        }
-
+        // [FIX 3 적용] 안전한 복원 진행 및 재시도 가능
         function importData(event) {
-            const file = event.target.files[0]; if (!file) return;
+            const file = event.target.files[0]; 
+            if (!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     const imported = JSON.parse(e.target.result);
                     if (Array.isArray(imported)) {
-                        diaryEntries = imported; activeDiaryId = diaryEntries.length > 0 ? diaryEntries[0].id : '';
-                        saveStateToLocalStorage(); renderDiaryTimeline(); loadActiveDiary(activeDiaryId); updateGlobalStats(); closeSettingsModal();
+                        diaryEntries = imported; 
+                        activeDiaryId = diaryEntries.length > 0 ? diaryEntries[0].id : '';
+                        saveStateToLocalStorage(); 
+                        renderDiaryTimeline(); 
+                        loadActiveDiary(activeDiaryId); 
+                        updateGlobalStats(); 
+                        closeSettingsModal();
                         showToast('복원 완료되었습니다!', 'success');
+                    } else {
+                        showToast('지원하지 않는 형식의 백업 파일입니다.', 'warning');
                     }
-                } catch(err) { showToast('파일 파싱 에러.', 'warning'); }
-            }; reader.readAsText(file);
+                } catch(err) { 
+                    showToast('파일 복원 실패: 올바른 백업 파일이 아닙니다.', 'warning'); 
+                } finally {
+                    event.target.value = ''; // 재업로드 허용
+                }
+            }; 
+            reader.readAsText(file);
         }
 
         function openNewDiaryModal() {
@@ -1560,7 +1608,12 @@
             document.getElementById('quiz-modal').classList.remove('hidden'); document.getElementById('quiz-state-play').classList.remove('hidden'); document.getElementById('quiz-state-result').classList.add('hidden');
             renderQuizQuestion();
         }
-        function closeQuiz() { document.getElementById('quiz-modal').classList.add('hidden'); loadActiveDiary(activeDiaryId); updateGlobalStats(); }
+        
+        // [FIX 1&4 적용] 예외 발생에도 무조건 창이 닫히도록 수정
+        function closeQuiz() { 
+            document.getElementById('quiz-modal').classList.add('hidden'); 
+            try { loadActiveDiary(activeDiaryId); updateGlobalStats(); } catch(e){} 
+        }
 
         function renderQuizQuestion() {
             const currentQ = quizWordsList[currentQuizIndex];
@@ -1678,11 +1731,30 @@
             });
         }
 
+        // [FIX 2 적용] 툴팁 닫기 버튼 전용 함수
+        function closeStoryTooltip(event) {
+            if(event) event.stopPropagation();
+            document.getElementById('story-tooltip').classList.add('hidden');
+        }
+
+        // [FIX 2 적용] 단어를 다시 누르면 닫히도록(토글) 처리
         function triggerWordTooltip(event, element, word, pos, pron, meaning) {
             event.stopPropagation();
             const tooltip = document.getElementById('story-tooltip');
-            document.getElementById('tooltip-pos').textContent = pos || '단어'; document.getElementById('tooltip-word').textContent = word; document.getElementById('tooltip-pron').textContent = pron && pron !== '없음' ? `[${pron}]` : ''; document.getElementById('tooltip-meaning').textContent = meaning;
+            
+            // 만약 동일한 단어를 한 번 더 눌렀다면 닫기
+            if (!tooltip.classList.contains('hidden') && document.getElementById('tooltip-word').textContent === word) {
+                tooltip.classList.add('hidden');
+                return;
+            }
+
+            document.getElementById('tooltip-pos').textContent = pos || '단어'; 
+            document.getElementById('tooltip-word').textContent = word; 
+            document.getElementById('tooltip-pron').textContent = pron && pron !== '없음' ? `[${pron}]` : ''; 
+            document.getElementById('tooltip-meaning').textContent = meaning;
+            
             tooltip.classList.remove('hidden');
+            
             const rect = element.getBoundingClientRect(), posX = rect.left + (rect.width / 2) + window.scrollX, posY = rect.top + window.scrollY - 8; 
             tooltip.style.top = `${posY}px`;
             const tooltipWidth = tooltip.offsetWidth || 180; let finalLeft = posX;
