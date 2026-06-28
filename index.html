@@ -114,7 +114,7 @@
                     <span>VocaDiary</span>
                     <span class="text-[10px] bg-indigo-900/50 text-indigo-300 px-1.5 py-0.5 rounded-full font-bold">PRO</span>
                 </h1>
-                <p class="text-[10px] sm:text-xs text-diary-darkSoftText">영단어장</p>
+                <p class="text-[10px] sm:text-xs text-diary-darkSoftText">스마트 영단어장</p>
             </div>
         </div>
 
@@ -1356,12 +1356,10 @@
             return errorMsg;
         }
 
-        // [MODIFIED] 미리보기 환경에서 접근 가능한 공식 지원 모델로 복구 (연결 실패 문제 해결)
+        // [MODIFIED] 우회 로직을 삭제하고 Gemini-3.5-flash 모델 단일로만 직접 호출합니다.
         async function executeGeminiRequest(payload) {
             const activeKey = getActiveApiKey();
-            
-            // 캔버스 환경 지원 모델로 롤백 (gemini-3.5-flash는 현재 환경 제약으로 연결 거부됨)
-            const model = 'gemini-2.5-flash-preview-09-2025';
+            const model = 'gemini-3.5-flash';
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeKey}`;
             
             try {
