@@ -1356,12 +1356,12 @@
             return errorMsg;
         }
 
-        // [MODIFIED] 무한 로딩 버그를 해결하고 Gemini-3.5-flash 모델에 맞춘 통합 요청 모듈
+        // [MODIFIED] 미리보기 환경에서 접근 가능한 공식 지원 모델로 복구 (연결 실패 문제 해결)
         async function executeGeminiRequest(payload) {
             const activeKey = getActiveApiKey();
             
-            // 사용자가 지정한 최신 버전(3.5-flash) 단일 모델만을 호출하도록 변경
-            const model = 'gemini-3.5-flash';
+            // 캔버스 환경 지원 모델로 롤백 (gemini-3.5-flash는 현재 환경 제약으로 연결 거부됨)
+            const model = 'gemini-2.5-flash-preview-09-2025';
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeKey}`;
             
             try {
