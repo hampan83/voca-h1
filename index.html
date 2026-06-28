@@ -206,7 +206,7 @@
             <div class="p-4 sm:p-5 border-b border-diary-darkBorder bg-diary-darkCard/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <div class="flex items-center space-x-2 mb-1">
-                        <span id="active-diary-date" class="text-[10px] font-semibold text-indigo-400 tracking-wider bg-indigo-950/60 px-2 py-0.5 rounded">2026.06.06</span>
+                        <span id="active-diary-date" class="text-[10px] font-semibold text-indigo-400 tracking-wider bg-indigo-950/60 px-2 py-0.5 rounded"></span>
                         <span id="active-diary-count" class="text-xs text-diary-darkSoftText">0개의 단어 수록</span>
                     </div>
                     <h2 id="active-diary-title" class="text-lg sm:text-xl font-bold text-white">단어장을 선택해주세요</h2>
@@ -487,6 +487,50 @@
         </div>
     </div>
 
+    <!-- Edit Diary Modal -->
+    <div id="edit-diary-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-diary-darkCard rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-diary-darkBorder transition-all transform scale-95 opacity-0 duration-300" id="edit-diary-modal-content">
+            <div class="px-6 py-4 bg-slate-800 border-b border-diary-darkBorder flex items-center justify-between">
+                <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-pen-to-square text-indigo-400"></i>
+                    <span>단어장 일지 수정</span>
+                </h3>
+                <button onclick="closeEditDiaryModal()" class="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-slate-700 transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <form onsubmit="handleEditDiarySubmit(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">날짜 선택</label>
+                    <input id="edit-diary-date" type="date" required 
+                           class="w-full px-4 py-2.5 border border-diary-darkBorder rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 bg-slate-800 text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">다이어리 주제 / 제목</label>
+                    <input id="edit-diary-title" type="text" required 
+                           class="w-full px-4 py-2.5 border border-diary-darkBorder rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:bg-slate-800 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">오늘의 단어 학습 소감 / 메모</label>
+                    <textarea id="edit-diary-desc" rows="2" 
+                              class="w-full px-4 py-2.5 border border-diary-darkBorder rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 bg-slate-800 text-white"></textarea>
+                </div>
+
+                <div class="flex items-center space-x-3 pt-3">
+                    <button type="button" onclick="closeEditDiaryModal()" 
+                            class="flex-1 py-3 text-sm font-semibold text-gray-300 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors">
+                        취소
+                    </button>
+                    <button type="submit" 
+                            class="flex-1 py-3 text-sm font-semibold text-white bg-diary-primary hover:bg-indigo-700 rounded-xl shadow-md transition-colors">
+                        수정 완료
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Generic Custom Confirmation Modal -->
     <div id="confirm-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="bg-diary-darkCard rounded-2xl max-w-sm w-full overflow-hidden shadow-2xl border border-diary-darkBorder p-6 transition-all transform scale-95 opacity-0 duration-300" id="confirm-modal-content">
@@ -500,7 +544,6 @@
                     <button onclick="closeConfirmModal()" class="flex-1 py-2.5 text-sm font-semibold text-gray-300 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors">
                         취소
                     </button>
-                    <!-- FIX 1: 명확하게 클릭 함수 실행 -->
                     <button id="confirm-execute-btn" onclick="executeConfirmAction()" class="flex-1 py-2.5 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-xl shadow-md transition-colors">
                         실행하기
                     </button>
@@ -581,10 +624,10 @@
                 <div class="mb-4">
                     <div class="flex justify-between items-center text-xs text-gray-400 mb-2">
                         <span>스마트 다이어리 퀴즈</span>
-                        <span id="quiz-question-counter" class="font-bold">Q 1 / 5</span>
+                        <span id="quiz-question-counter" class="font-bold"></span>
                     </div>
                     <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
-                        <div id="quiz-progress-bar" class="bg-emerald-500 h-full transition-all" style="width: 20%"></div>
+                        <div id="quiz-progress-bar" class="bg-emerald-500 h-full transition-all" style="width: 0%"></div>
                     </div>
                 </div>
 
@@ -611,7 +654,7 @@
                 
                 <div class="bg-slate-800 rounded-2xl p-4 max-w-xs mx-auto mb-6">
                     <span class="text-xs text-gray-400 block mb-1">학습 정답률</span>
-                    <h4 id="quiz-result-score" class="text-3xl font-black text-indigo-400">4 / 5 개</h4>
+                    <h4 id="quiz-result-score" class="text-3xl font-black text-indigo-400">- / - 개</h4>
                     <p id="quiz-result-feedback" class="text-xs text-diary-darkSoftText mt-1.5">조금만 더 집중하면 완벽해집니다!</p>
                 </div>
 
@@ -695,7 +738,7 @@
         </div>
     </div>
 
-    <!-- Global Story Tooltip element overlay (FIX 2: 명시적 X 버튼 및 여백 추가) -->
+    <!-- Global Story Tooltip element overlay -->
     <div id="story-tooltip" class="absolute hidden z-50 bg-white text-slate-900 p-3 rounded-xl shadow-2xl border border-slate-100 min-w-[120px] max-w-xs pointer-events-auto transform -translate-x-1/2 -translate-y-full transition-all duration-150">
         <button onclick="closeStoryTooltip(event)" class="absolute top-1 right-2 text-gray-400 hover:text-gray-600 p-1">
             <i class="fa-solid fa-xmark text-sm"></i>
@@ -717,7 +760,7 @@
         // Global API Key
         const apiKey = "";
 
-        // Default Mock Data
+        // Default Mock Data (첫 번째 일지에는 7개 이상 포함하여 퀴즈 제한 해제 확인)
         const defaultDiaryEntries = [
             {
                 id: 'diary-1',
@@ -729,7 +772,9 @@
                     { id: 'Sup-2', word: 'Superfluous', pos: '형용사', pronunciation: '수퍼플루어스', meaning: '불필요한, 과잉의', status: 'memorized' },
                     { id: 'Ser-3', word: 'Serendipity', pos: '명사', pronunciation: '세렌디피티', meaning: '뜻밖의 기쁨, 운 좋은 발견', status: 'learning' },
                     { id: 'Amb-4', word: 'Ambiguous', pos: '형용사', pronunciation: '앰비규어스', meaning: '모호한, 불분명한', status: 'learning' },
-                    { id: 'Res-5', word: 'Resilient', pos: '형용사', pronunciation: '리질리언트', meaning: '회복력 있는, 탄력 있는', status: 'learning' }
+                    { id: 'Res-5', word: 'Resilient', pos: '형용사', pronunciation: '리질리언트', meaning: '회복력 있는, 탄력 있는', status: 'learning' },
+                    { id: 'Elo-6', word: 'Eloquent', pos: '형용사', pronunciation: '엘로퀀트', meaning: '유창한, 설득력 있는', status: 'learning' },
+                    { id: 'Obs-7', word: 'Obscure', pos: '형용사', pronunciation: '옵스큐어', meaning: '이해하기 힘든, 모호한', status: 'learning' }
                 ]
             },
             {
@@ -978,6 +1023,9 @@
                         </div>
                         <div class="flex items-center space-x-1.5">
                             <span class="text-[10px] bg-slate-700 border border-diary-darkBorder px-1.5 py-0.5 rounded font-medium text-gray-300">${wordCount} 단어</span>
+                            <button onclick="requestEditDiary(event, '${diary.id}')" title="수정" class="text-gray-400 hover:text-indigo-400 transition-colors p-1 rounded hover:bg-slate-800">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </button>
                             <button onclick="requestDeleteDiary(event, '${diary.id}')" title="삭제" class="text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-slate-800">
                                 <i class="fa-solid fa-trash-can text-xs"></i>
                             </button>
@@ -1073,9 +1121,9 @@
                             <div>
                                 <div class="flex items-center space-x-2">
                                     <h3 class="font-bold text-base sm:text-lg text-white tracking-tight">${w.word}</h3>
-                                    ${w.pos ? `<span class="text-[9px] sm:text-[10px] bg-indigo-950/60 text-indigo-300 px-1.5 py-0.5 rounded font-semibold">${w.pos}</span>` : ''}
                                 </div>
                                 ${w.pronunciation && w.pronunciation !== '없음' ? `<p class="text-[11px] text-diary-darkSoftText mt-0.5 font-medium">[발음: ${w.pronunciation}]</p>` : ''}
+                                ${w.pos ? `<span class="text-[9px] sm:text-[10px] bg-indigo-950/60 text-indigo-300 px-1.5 py-0.5 rounded font-semibold inline-block mt-0.5">${w.pos}</span>` : ''}
                             </div>
                         </div>
                         <div class="flex items-center space-x-1.5">
@@ -1107,7 +1155,7 @@
             });
         }
 
-        // [FIX 1&4 적용] 오류 발생 여부와 상관없이 확실히 업데이트 됨
+        // Global Stats Update
         function updateGlobalStats() {
             let totalWords = 0;
             let memorizedWords = 0;
@@ -1166,6 +1214,18 @@
             showToast(`단어 "${wordVal}" 등록 완료!`, 'success');
         }
 
+        function exportData() {
+            const dataStr = JSON.stringify(diaryEntries, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `vocadiary_backup_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('전체 데이터 백업본(JSON)을 기기에 저장했습니다.', 'success');
+        }
+
         function exportCSV() {
             const activeDiary = diaryEntries.find(d => d.id === activeDiaryId);
             if (!activeDiary || activeDiary.words.length === 0) return showToast('내보낼 수 있는 단어가 존재하지 않습니다.', 'warning');
@@ -1185,7 +1245,6 @@
             showToast('CSV 내보내기가 완료되었습니다.', 'success');
         }
 
-        // [FIX 3 적용] 복원 중 예외처리를 강화하고 파일을 여러 번 불러올 수 있도록 보강
         function importCSV(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1281,23 +1340,10 @@
             });
         }
 
-        // Active Key resolver
         function getActiveApiKey() {
             const customKey = localStorage.getItem('vocadiary_custom_api_key');
             if (customKey && customKey.trim() !== '') return customKey.trim();
             return apiKey;
-        }
-
-        function getApiRequestConfig(modelName) {
-            const activeKey = getActiveApiKey();
-            if (!activeKey) {
-                showToast('설정(⚙️) 메뉴에서 본인의 Gemini API Key를 등록해 주세요.', 'warning');
-                throw new Error("Gemini API key is not configured.");
-            }
-            const trimmedKey = activeKey.trim();
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${trimmedKey}`;
-            const headers = { 'Content-Type': 'application/json' };
-            return { apiUrl, headers };
         }
 
         async function parseGoogleError(response) {
@@ -1310,48 +1356,56 @@
             return errorMsg;
         }
 
-        async function callGeminiApi(word) {
+        // [MODIFIED] 무한 로딩 버그를 해결하고 Gemini-3.5-flash 모델에 맞춘 통합 요청 모듈
+        async function executeGeminiRequest(payload) {
             const activeKey = getActiveApiKey();
-            if (!activeKey) throw new Error("설정(⚙️) 메뉴에서 Gemini API Key를 등록해 주세요.");
+            
+            // 사용자가 지정한 최신 버전(3.5-flash) 단일 모델만을 호출하도록 변경
+            const model = 'gemini-3.5-flash';
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeKey}`;
+            
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
 
-            const models = ['gemini-3.5-flash', 'gemini-2.5-flash-preview-09-2025', 'gemini-1.5-flash'];
-            let lastError = null;
-
-            for (const model of models) {
-                try {
-                    const config = getApiRequestConfig(model);
-                    const { apiUrl, headers } = config;
-                    
-                    const systemPrompt = "You are a highly accurate English-Korean dictionary. For the given English word, provide its primary part of speech, its approximate Korean pronunciation, and its main Korean meanings. The part of speech must be translated to one of these exact Korean terms: '형용사', '명사', '동사', '부사', '전치사', '접속사', '대명사'.";
-                    const payload = {
-                        contents: [{ parts: [{ text: `Lookup the word: "${word}"` }] }],
-                        generationConfig: {
-                            responseMimeType: "application/json",
-                            responseSchema: {
-                                type: "OBJECT",
-                                properties: {
-                                    pos: { type: "STRING" },
-                                    pronunciation: { type: "STRING" },
-                                    meaning: { type: "STRING" }
-                                },
-                                required: ["pos", "pronunciation", "meaning"]
-                            }
-                        },
-                        systemInstruction: { parts: [{ text: systemPrompt }] }
-                    };
-
-                    const response = await fetch(apiUrl, { method: 'POST', headers, body: JSON.stringify(payload) });
-                    if (!response.ok) throw new Error(await parseGoogleError(response));
-                    
-                    const result = await response.json();
-                    const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-                    if (text) return JSON.parse(text);
-                    throw new Error("올바르지 않은 응답 포맷");
-                } catch (err) {
-                    lastError = err;
+                if (response.ok) {
+                    return await response.json();
+                } else {
+                    const errorMsg = await parseGoogleError(response);
+                    throw new Error(`모델 연결 실패 (${model}): ` + errorMsg);
                 }
+            } catch (error) {
+                throw error;
             }
-            throw lastError;
+        }
+
+        async function callGeminiApi(word) {
+            const systemPrompt = "You are a highly accurate English-Korean dictionary. For the given English word, provide its primary part of speech, its approximate Korean pronunciation, and its main Korean meanings. The part of speech must be translated to one of these exact Korean terms: '형용사', '명사', '동사', '부사', '전치사', '접속사', '대명사'.";
+
+            const payload = {
+                contents: [{ parts: [{ text: `Lookup the word: "${word}"` }] }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            pos: { type: "STRING" },
+                            pronunciation: { type: "STRING" },
+                            meaning: { type: "STRING" }
+                        },
+                        required: ["pos", "pronunciation", "meaning"]
+                    }
+                },
+                systemInstruction: { parts: [{ text: systemPrompt }] }
+            };
+
+            const result = await executeGeminiRequest(payload);
+            const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (text) return JSON.parse(text);
+            throw new Error("올바르지 않은 응답 포맷");
         }
 
         async function autoFillWord(type) {
@@ -1388,7 +1442,6 @@
             }
         }
 
-        // [FIX 1&4 적용] 오류 때문에 닫히지 않는 현상 방지를 위해 실행 구조 재편 및 try/catch 적용
         function openConfirmModal(config) {
             document.getElementById('confirm-modal-title').textContent = config.title;
             document.getElementById('confirm-modal-body').textContent = config.body;
@@ -1407,7 +1460,7 @@
 
         function executeConfirmAction() {
             const action = pendingConfirmAction;
-            closeConfirmModal(); // 무조건 먼저 닫습니다!
+            closeConfirmModal();
             if (action) {
                 try { action(); } 
                 catch(e) { console.error("Action error: ", e); }
@@ -1486,8 +1539,11 @@
                         <div class="flex items-center space-x-3">
                             <span class="w-6 h-6 rounded-full flex items-center justify-center bg-slate-800 text-gray-400"><i class="fa-solid fa-hashtag text-[10px]"></i></span>
                             <div>
-                                <div class="flex items-center space-x-2"><h3 class="font-bold text-base sm:text-lg text-white tracking-tight">${w.word}</h3>${w.pos ? `<span class="text-[10px] bg-indigo-950/70 text-indigo-300 px-1.5 py-0.5 rounded font-medium">${w.pos}</span>` : ''}</div>
-                                ${w.pronunciation && w.pronunciation !== '없음' ? `<p class="text-xs text-diary-darkSoftText mt-0.5 font-medium">[발음: ${w.pronunciation}]</p>` : ''}
+                                <div class="flex items-center space-x-2">
+                                    <h3 class="font-bold text-base sm:text-lg text-white tracking-tight">${w.word}</h3>
+                                </div>
+                                ${w.pronunciation && w.pronunciation !== '없음' ? `<p class="text-[11px] text-diary-darkSoftText mt-0.5 font-medium">[발음: ${w.pronunciation}]</p>` : ''}
+                                ${w.pos ? `<span class="text-[9px] sm:text-[10px] bg-indigo-950/60 text-indigo-300 px-1.5 py-0.5 rounded font-semibold inline-block mt-0.5">${w.pos}</span>` : ''}
                                 <span class="text-[9px] bg-slate-800 text-slate-400 px-1 py-0.5 rounded block mt-1 w-max font-semibold">${w.diaryTitle}</span>
                             </div>
                         </div>
@@ -1506,7 +1562,6 @@
             });
         }
 
-        // [FIX 3 적용] 안전한 복원 진행 및 재시도 가능
         function importData(event) {
             const file = event.target.files[0]; 
             if (!file) return;
@@ -1595,6 +1650,48 @@
             closeNewDiaryModal(); renderDiaryTimeline(); loadActiveDiary(activeDiaryId); updateGlobalStats(); showToast('일지 생성 완료!', 'success');
         }
 
+        let diaryToEditId = null;
+        function requestEditDiary(event, diaryId) {
+            event.stopPropagation();
+            const diary = diaryEntries.find(d => d.id === diaryId);
+            if (!diary) return;
+            diaryToEditId = diaryId;
+            document.getElementById('edit-diary-date').value = diary.date;
+            document.getElementById('edit-diary-title').value = diary.title;
+            document.getElementById('edit-diary-desc').value = diary.desc || '';
+            
+            const modal = document.getElementById('edit-diary-modal'), content = document.getElementById('edit-diary-modal-content');
+            modal.classList.remove('hidden'); setTimeout(() => content.classList.remove('scale-95', 'opacity-0'), 50);
+        }
+
+        function closeEditDiaryModal() {
+            const modal = document.getElementById('edit-diary-modal'), content = document.getElementById('edit-diary-modal-content');
+            content.classList.add('scale-95', 'opacity-0'); setTimeout(() => { modal.classList.add('hidden'); diaryToEditId = null; }, 300);
+        }
+
+        function handleEditDiarySubmit(event) {
+            event.preventDefault();
+            if (!diaryToEditId) return;
+            const diary = diaryEntries.find(d => d.id === diaryToEditId);
+            if (!diary) return;
+            
+            const dateVal = document.getElementById('edit-diary-date').value;
+            const titleVal = document.getElementById('edit-diary-title').value.trim();
+            const descVal = document.getElementById('edit-diary-desc').value.trim();
+            
+            if (!dateVal || !titleVal) return showToast('정확한 날짜와 제목을 입력해주십시오.', 'warning');
+            
+            diary.date = dateVal;
+            diary.title = titleVal;
+            diary.desc = descVal;
+            
+            saveStateToLocalStorage();
+            closeEditDiaryModal();
+            renderDiaryTimeline();
+            if (activeDiaryId === diaryToEditId) loadActiveDiary(activeDiaryId);
+            showToast('일지가 수정되었습니다.', 'success');
+        }
+
         function toggleMobileSearch() {
             const searchBar = document.getElementById('mobile-search-bar'); searchBar.classList.toggle('hidden');
             if (!searchBar.classList.contains('hidden')) document.getElementById('mobile-search-input').focus();
@@ -1603,13 +1700,16 @@
         function startQuiz() {
             const activeDiary = diaryEntries.find(d => d.id === activeDiaryId);
             if (!activeDiary || activeDiary.words.length < 2) return showToast('퀴즈를 위해 단어가 2개 이상 필요합니다.', 'warning');
-            quizWordsList = [...activeDiary.words].sort(() => Math.random() - 0.5).slice(0, 5);
+            
+            quizWordsList = [...activeDiary.words].sort(() => Math.random() - 0.5);
             currentQuizIndex = 0; quizCorrectAnswers = 0;
-            document.getElementById('quiz-modal').classList.remove('hidden'); document.getElementById('quiz-state-play').classList.remove('hidden'); document.getElementById('quiz-state-result').classList.add('hidden');
+            
+            document.getElementById('quiz-modal').classList.remove('hidden'); 
+            document.getElementById('quiz-state-play').classList.remove('hidden'); 
+            document.getElementById('quiz-state-result').classList.add('hidden');
             renderQuizQuestion();
         }
         
-        // [FIX 1&4 적용] 예외 발생에도 무조건 창이 닫히도록 수정
         function closeQuiz() { 
             document.getElementById('quiz-modal').classList.add('hidden'); 
             try { loadActiveDiary(activeDiaryId); updateGlobalStats(); } catch(e){} 
@@ -1657,7 +1757,7 @@
 
         function openStoryCreator() {
             const activeDiary = diaryEntries.find(d => d.id === activeDiaryId);
-            if (!activeDiary || activeDiary.words.length === 0) return showToast('이야기로 엮을 수 있는 단어가 없습니다.', 'warning');
+            if (!activeDiary || activeDiary.words.length === 0) return showToast('이야기로 엮을 수 단어가 없습니다.', 'warning');
             const checklistContainer = document.getElementById('story-checklist-container'); checklistContainer.innerHTML = '';
             activeDiary.words.forEach(w => {
                 const label = document.createElement('label'); label.className = "flex items-center space-x-3 p-2 bg-slate-800/80 border border-diary-darkBorder rounded-xl hover:border-violet-800 cursor-pointer";
@@ -1682,34 +1782,25 @@
             const loading = document.getElementById('story-loading-state'), generateBtn = document.getElementById('story-generate-btn');
             loading.classList.remove('hidden'); generateBtn.disabled = true;
 
-            const activeKey = getActiveApiKey();
-            if (!activeKey) { showToast('설정(⚙️) 메뉴에서 Gemini API Key를 등록해 주세요.', 'warning'); loading.classList.add('hidden'); generateBtn.disabled = false; return; }
+            try {
+                const systemPrompt = "You are a creative English-Korean language teacher. Write a cohesive, entertaining Korean story (5-8 sentences) incorporating the provided English words. Return JSON containing 'title' and 'storySegments' (array of {type: 'text'|'word', content: '...', wordId: '...'}).";
+                const payload = {
+                    contents: [{ parts: [{ text: `Create a story using these exact words with their corresponding IDs: ${JSON.stringify(selectedWords)}` }] }],
+                    generationConfig: { responseMimeType: "application/json", responseSchema: { type: "OBJECT", properties: { title: { type: "STRING" }, storySegments: { type: "ARRAY", items: { type: "OBJECT", properties: { type: { type: "STRING", enum: ["text", "word"] }, content: { type: "STRING" }, wordId: { type: "STRING" } }, required: ["type", "content"] } } }, required: ["title", "storySegments"] } },
+                    systemInstruction: { parts: [{ text: systemPrompt }] }
+                };
 
-            const models = ['gemini-3.5-flash', 'gemini-2.5-flash-preview-09-2025', 'gemini-1.5-flash'];
-            let storyData = null; let lastError = null;
-
-            for (const model of models) {
-                try {
-                    const config = getApiRequestConfig(model);
-                    const systemPrompt = "You are a creative English-Korean language teacher. Write a cohesive, entertaining Korean story (5-8 sentences) incorporating the provided English words. Return JSON containing 'title' and 'storySegments' (array of {type: 'text'|'word', content: '...', wordId: '...'}).";
-                    const payload = {
-                        contents: [{ parts: [{ text: `Create a story using these exact words with their corresponding IDs: ${JSON.stringify(selectedWords)}` }] }],
-                        generationConfig: { responseMimeType: "application/json", responseSchema: { type: "OBJECT", properties: { title: { type: "STRING" }, storySegments: { type: "ARRAY", items: { type: "OBJECT", properties: { type: { type: "STRING", enum: ["text", "word"] }, content: { type: "STRING" }, wordId: { type: "STRING" } }, required: ["type", "content"] } } }, required: ["title", "storySegments"] } },
-                        systemInstruction: { parts: [{ text: systemPrompt }] }
-                    };
-
-                    const response = await fetch(config.apiUrl, { method: 'POST', headers: config.headers, body: JSON.stringify(payload) });
-                    if (!response.ok) throw new Error(await parseGoogleError(response));
-                    const result = await response.json(); const jsonText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-                    if (!jsonText) throw new Error("No text candidate returned");
-                    storyData = JSON.parse(jsonText); break;
-                } catch (e) { lastError = e; }
+                const result = await executeGeminiRequest(payload); 
+                const jsonText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!jsonText) throw new Error("No text candidate returned");
+                
+                const storyData = JSON.parse(jsonText);
+                renderStructuredStory(storyData, selectedWords);
+            } catch (error) {
+                showToast(`AI 이야기 생성 실패: ${error.message || '알 수 없는 오류'}`, 'warning');
+            } finally {
+                loading.classList.add('hidden'); generateBtn.disabled = false;
             }
-
-            if (storyData) renderStructuredStory(storyData, selectedWords);
-            else showToast(`AI 이야기 생성 실패: ${lastError ? lastError.message : '알 수 없는 오류'}`, 'warning');
-            
-            loading.classList.add('hidden'); generateBtn.disabled = false;
         }
 
         function renderStructuredStory(storyData, selectedWords) {
@@ -1731,18 +1822,15 @@
             });
         }
 
-        // [FIX 2 적용] 툴팁 닫기 버튼 전용 함수
         function closeStoryTooltip(event) {
             if(event) event.stopPropagation();
             document.getElementById('story-tooltip').classList.add('hidden');
         }
 
-        // [FIX 2 적용] 단어를 다시 누르면 닫히도록(토글) 처리
         function triggerWordTooltip(event, element, word, pos, pron, meaning) {
             event.stopPropagation();
             const tooltip = document.getElementById('story-tooltip');
             
-            // 만약 동일한 단어를 한 번 더 눌렀다면 닫기
             if (!tooltip.classList.contains('hidden') && document.getElementById('tooltip-word').textContent === word) {
                 tooltip.classList.add('hidden');
                 return;
@@ -1761,6 +1849,49 @@
             if (posX - (tooltipWidth / 2) < 16) finalLeft = (tooltipWidth / 2) + 16; else if (posX + (tooltipWidth / 2) > window.innerWidth - 16) finalLeft = window.innerWidth - (tooltipWidth / 2) - 16;
             tooltip.style.left = `${finalLeft}px`;
         }
+
+        // 인라인 이벤트 핸들러(onclick 등)에서 함수를 찾지 못하는 환경(ReferenceError)을 대비해 전역 window 객체에 명시적으로 할당합니다.
+        window.openSettingsModal = openSettingsModal;
+        window.closeSettingsModal = closeSettingsModal;
+        window.openNewDiaryModal = openNewDiaryModal;
+        window.closeNewDiaryModal = closeNewDiaryModal;
+        window.requestEditDiary = requestEditDiary;
+        window.closeEditDiaryModal = closeEditDiaryModal;
+        window.handleEditDiarySubmit = handleEditDiarySubmit;
+        window.openInstallModal = openInstallModal;
+        window.closeInstallModal = closeInstallModal;
+        window.saveCustomApiKey = saveCustomApiKey;
+        window.exportData = exportData;
+        window.exportCSV = exportCSV;
+        window.importCSV = importCSV;
+        window.importData = importData;
+        window.requestClearAllData = requestClearAllData;
+        window.toggleMobileSearch = toggleMobileSearch;
+        window.startQuiz = startQuiz;
+        window.closeQuiz = closeQuiz;
+        window.openStoryCreator = openStoryCreator;
+        window.closeStoryCreator = closeStoryCreator;
+        window.generateAIStory = generateAIStory;
+        window.closeConfirmModal = closeConfirmModal;
+        window.executeConfirmAction = executeConfirmAction;
+        window.handleCreateDiarySubmit = handleCreateDiarySubmit;
+        window.handleEditWordSubmit = handleEditWordSubmit;
+        window.closeEditWordModal = closeEditWordModal;
+        window.autoFillWord = autoFillWord;
+        window.addWordToActiveDiary = addWordToActiveDiary;
+        window.toggleAllMeanings = toggleAllMeanings;
+        window.shuffleActiveWords = shuffleActiveWords;
+        window.copyAppAddress = copyAppAddress;
+        window.closeStoryTooltip = closeStoryTooltip;
+        window.triggerWordTooltip = triggerWordTooltip;
+        window.speakWord = speakWord;
+        window.requestEditWord = requestEditWord;
+        window.requestDeleteWord = requestDeleteWord;
+        window.toggleWordStatus = toggleWordStatus;
+        window.toggleMeaning = toggleMeaning;
+        window.selectDiary = selectDiary;
+        window.requestDeleteDiary = requestDeleteDiary;
+        window.checkQuizAnswer = checkQuizAnswer;
     </script>
 </body>
 </html>
